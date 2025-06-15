@@ -567,6 +567,31 @@
             </div>
         </section>
 
+        <!-- Seção PIB -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                PIB - Produto Interno Bruto
+            </h2>
+            <div class="grid">
+                <div class="card" style="grid-column: 1 / -1;">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-trophy"></i>
+                            <span class="tooltip" data-tooltip="Principal indicador da atividade econômica nacional">PIB Trimestral</span>
+                        </div>
+                    </div>
+                    <div id="pib" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                    <div id="grafico_pib" class="chart-container" style="display: none;"></div>
+                </div>
+            </div>
+        </section>
+
         <!-- Seção Atividade Econômica -->
         <section class="section">
             <h2 class="section-title">
@@ -1255,6 +1280,203 @@
             }, 500);
         }
 
+        // Função para buscar dados do PIB
+        async function fetchPIB() {
+            const apiUrl = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.4385/dados/ultimos/8?formato=json";
+            
+            try {
+                const data = await fetchWithProxy(apiUrl, 'pib');
+                
+                if (data && data.length > 0) {
+                    const latest = data[data.length - 1];
+                    const valor = parseFloat(latest.valor);
+                    
+                    // Calcular variação trimestral e anual
+                    let variacaoTrimestral = null;
+                    let variacaoAnual = null;
+                    
+                    if (data.length > 1) {
+                        const anterior = parseFloat(data[data.length - 2].valor);
+                        variacaoTrimestral = ((valor - anterior) / anterior * 100).toFixed(2);
+                    }
+                    
+                    if (data.length >= 4) {
+                        const anoAnterior = parseFloat(data[data.length - 5].valor);
+                        variacaoAnual = ((valor - anoAnterior) / anoAnterior * 100).toFixed(2);
+                    }
+                    
+                    // Determinar status da economia
+                    let statusEconomia = 'Estável';
+                    let classeStatus = '';
+                    if (variacaoTrimestral && parseFloat(variacaoTrimestral) > 0.5) {
+                        statusEconomia = 'Crescimento';
+                        classeStatus = 'positive';
+                    } else if (variacaoTrimestral && parseFloat(variacaoTrimestral) < -0.5) {
+                        statusEconomia = 'Retração';
+                        classeStatus = 'negative';
+                    }
+                    
+                    const content = `
+                        <div class="stats-row">
+                            <div class="stat-card">
+                                <div class="stat-value">${valor.toFixed(2)}</div>
+                                <div class="stat-label">Índice Base</div>
+                            </div>
+                            ${variacaoTrimestral !== null ? `
+                            <div class="stat-card">
+                                <div class="stat-value ${parseFloat(variacaoTrimestral) >= 0 ? 'positive' : 'negative'}">${parseFloat(variacaoTrimestral) >= 0 ? '+' : ''}${variacaoTrimestral}%</div>
+                                <div class="stat-label">Variação Trimestral</div>
+                            </div>
+                            ` : ''}
+                            ${variacaoAnual !== null ? `
+                            <div class="stat-card">
+                                <div class="stat-value ${parseFloat(variacaoAnual) >= 0 ? 'positive' : 'negative'}">${parseFloat(variacaoAnual) >= 0 ? '+' : ''}${variacaoAnual}%</div>
+                                <div class="stat-label">Variação Anual</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Status:</span>
+                            <span class="metric-value ${classeStatus}">${statusEconomia}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Período:</span>
+                            <span class="metric-value">${formatDate(latest.data)}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Impacto:</span>
+                            <span class="metric-value">Principal indicador da economia nacional</span>
+                        </div>
+                    `;
+                    showSuccess('pib', content);
+
+                    // Preparar dados para o gráfico (últimos 8 trimestres)
+                    const categorias = data.map(item => {
+                        // Converter formato de data para trimestre
+                        const [day, month, year] = item.data.split('/');
+                        const trimestre = Math.ceil(parseInt(month) / 3);
+                        return `${trimestre}T${year}`;
+                    });
+                    
+                    const valores = data.map(item => parseFloat(item.valor));
+                    
+                    // Calcular variações trimestrais para o gráfico
+                    const variacoes = [];
+                    for (let i = 1; i < valores.length; i++) {
+                        const variacao = ((valores[i] - valores[i-1]) / valores[i-1] * 100);
+                        variacoes.push(variacao);
+                    }
+
+                    // Mostrar container do gráfico
+                    const chartContainer = document.getElementById('grafico_pib');
+                    chartContainer.style.display = 'block';
+
+                    // Configurar tema do gráfico
+                    const isDark = currentTheme === 'dark';
+                    
+                    Highcharts.chart('grafico_pib', {
+                        accessibility: {
+                            enabled: false
+                        },
+                        chart: {
+                            type: 'combination',
+                            backgroundColor: isDark ? '#161b22' : '#ffffff',
+                        },
+                        title: {
+                            text: 'PIB - Evolução e Variação Trimestral',
+                            style: {
+                                color: isDark ? '#e6edf3' : '#24292f'
+                            }
+                        },
+                        xAxis: {
+                            categories: categorias,
+                            labels: {
+                                style: {
+                                    color: isDark ? '#8b949e' : '#656d76'
+                                }
+                            }
+                        },
+                        yAxis: [{
+                            title: {
+                                text: 'Índice PIB',
+                                style: {
+                                    color: isDark ? '#e6edf3' : '#24292f'
+                                }
+                            },
+                            labels: {
+                                style: {
+                                    color: isDark ? '#8b949e' : '#656d76'
+                                }
+                            }
+                        }, {
+                            title: {
+                                text: 'Variação Trimestral (%)',
+                                style: {
+                                    color: isDark ? '#e6edf3' : '#24292f'
+                                }
+                            },
+                            labels: {
+                                style: {
+                                    color: isDark ? '#8b949e' : '#656d76'
+                                }
+                            },
+                            opposite: true
+                        }],
+                        series: [{
+                            name: 'PIB (Índice)',
+                            type: 'line',
+                            data: valores,
+                            color: '#58a6ff',
+                            lineWidth: 3,
+                            marker: {
+                                radius: 5
+                            },
+                            yAxis: 0
+                        }, {
+                            name: 'Variação Trimestral (%)',
+                            type: 'column',
+                            data: variacoes,
+                            color: '#3fb950',
+                            yAxis: 1,
+                            zones: [{
+                                value: 0,
+                                color: '#f85149'
+                            }, {
+                                color: '#3fb950'
+                            }]
+                        }],
+                        legend: {
+                            itemStyle: {
+                                color: isDark ? '#e6edf3' : '#24292f'
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: isDark ? '#21262d' : '#ffffff',
+                            style: {
+                                color: isDark ? '#e6edf3' : '#24292f'
+                            },
+                            shared: true,
+                            formatter: function() {
+                                let tooltip = `<b>${this.x}</b>`;
+                                this.points.forEach(point => {
+                                    if (point.series.name.includes('Variação')) {
+                                        tooltip += `<br/>${point.series.name}: ${point.y.toFixed(2)}%`;
+                                    } else {
+                                        tooltip += `<br/>${point.series.name}: ${point.y.toFixed(2)}`;
+                                    }
+                                });
+                                return tooltip;
+                            }
+                        }
+                    });
+                } else {
+                    showError('pib', 'Nenhum dado encontrado');
+                }
+            } catch (error) {
+                console.error('Erro PIB:', error);
+            }
+        }
+
         // Função para buscar dados do IBC-Br (Índice de Atividade Econômica)
         async function fetchIBCBr() {
             const apiUrl = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.24363/dados/ultimos/2?formato=json";
@@ -1423,7 +1645,7 @@
             
             showProgressBar();
             let completed = 0;
-            const total = 10; // Número total de APIs
+            const total = 11; // Número total de APIs (incluindo PIB)
             
             const updateProgressAndComplete = () => {
                 completed++;
@@ -1455,11 +1677,12 @@
             setTimeout(() => fetchWithProgress(fetchSELIC), 500);
             setTimeout(() => fetchWithProgress(fetchIPCA), 700);
             setTimeout(() => fetchWithProgress(fetchCDI), 900);
-            setTimeout(() => fetchWithProgress(fetchIBCBr), 1100);
-            setTimeout(() => fetchWithProgress(fetchBalancaComercial), 1300);
-            setTimeout(() => fetchWithProgress(fetchCredito), 1500);
-            setTimeout(() => fetchWithProgress(fetchCarteira), 1700);
-            setTimeout(() => fetchWithProgress(fetchInadimplencia), 1900);
+            setTimeout(() => fetchWithProgress(fetchPIB), 1100);
+            setTimeout(() => fetchWithProgress(fetchIBCBr), 1300);
+            setTimeout(() => fetchWithProgress(fetchBalancaComercial), 1500);
+            setTimeout(() => fetchWithProgress(fetchCredito), 1700);
+            setTimeout(() => fetchWithProgress(fetchCarteira), 1900);
+            setTimeout(() => fetchWithProgress(fetchInadimplencia), 2100);
         }
 
         // Função para formatar números grandes
