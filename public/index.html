@@ -631,6 +631,45 @@
             </div>
         </section>
 
+        <!-- Seção Investimentos -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-piggy-bank"></i>
+                Investimentos Populares
+            </h2>
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-university"></i>
+                            <span class="tooltip" data-tooltip="Rendimento da caderneta de poupança">Poupança</span>
+                        </div>
+                    </div>
+                    <div id="poupanca" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-chart-line"></i>
+                            <span class="tooltip" data-tooltip="Comparação: Poupança vs SELIC vs CDI">Comparativo</span>
+                        </div>
+                    </div>
+                    <div id="comparativo_investimentos" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Seção Crédito -->
         <section class="section">
             <h2 class="section-title">
@@ -1575,6 +1614,156 @@
             }
         }
 
+        // Função para buscar dados da Poupança
+        async function fetchPoupanca() {
+            const apiUrl = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.195/dados/ultimos/3?formato=json";
+            
+            try {
+                const data = await fetchWithProxy(apiUrl, 'poupanca');
+                
+                if (data && data.length > 0) {
+                    const latest = data[data.length - 1];
+                    const valor = parseFloat(latest.valor);
+                    
+                    // Calcular variação mensal se temos dados suficientes
+                    let variacaoMensal = null;
+                    if (data.length > 1) {
+                        const anterior = parseFloat(data[data.length - 2].valor);
+                        variacaoMensal = (valor - anterior).toFixed(4);
+                    }
+                    
+                    // Calcular rendimento anualizado (aproximado)
+                    const rendimentoAnual = (Math.pow(1 + valor/100, 12) - 1) * 100;
+                    
+                    // Simular valor em R$ 10.000 investidos
+                    const simulacao10k = 10000 * (valor / 100);
+                    
+                    const content = `
+                        <div class="stats-row">
+                            <div class="stat-card">
+                                <div class="stat-value">${formatPercentage(valor)}</div>
+                                <div class="stat-label">Rendimento Mensal</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${rendimentoAnual.toFixed(2)}%</div>
+                                <div class="stat-label">Anualizado (aprox)</div>
+                            </div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Simulação R$ 10.000:</span>
+                            <span class="metric-value positive">+${formatCurrency(simulacao10k).replace('R$', 'R$').trim()}/mês</span>
+                        </div>
+                        ${variacaoMensal !== null ? `
+                        <div class="metric">
+                            <span class="metric-label">Variação:</span>
+                            <span class="metric-value ${parseFloat(variacaoMensal) >= 0 ? 'positive' : 'negative'}">${parseFloat(variacaoMensal) >= 0 ? '+' : ''}${variacaoMensal} p.p.</span>
+                        </div>
+                        ` : ''}
+                        <div class="metric">
+                            <span class="metric-label">Data:</span>
+                            <span class="metric-value">${formatDate(latest.data)}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Vantagem:</span>
+                            <span class="metric-value">Liquidez diária + garantia</span>
+                        </div>
+                    `;
+                    showSuccess('poupanca', content);
+                } else {
+                    showError('poupanca', 'Nenhum dado encontrado');
+                }
+            } catch (error) {
+                console.error('Erro Poupança:', error);
+            }
+        }
+
+        // Função para criar comparativo entre investimentos
+        async function fetchComparativoInvestimentos() {
+            try {
+                showLoading('comparativo_investimentos');
+                
+                // Buscar dados da Poupança, SELIC e CDI simultaneamente
+                const [poupancaData, selicData, cdiData] = await Promise.all([
+                    fetchWithProxy("https://api.bcb.gov.br/dados/serie/bcdata.sgs.195/dados/ultimos/1?formato=json", 'temp_poupanca'),
+                    fetchWithProxy("https://api.bcb.gov.br/dados/serie/bcdata.sgs.11/dados/ultimos/1?formato=json", 'temp_selic'),
+                    fetchWithProxy("https://api.bcb.gov.br/dados/serie/bcdata.sgs.12/dados/ultimos/1?formato=json", 'temp_cdi')
+                ]);
+                
+                if (poupancaData && selicData && cdiData && 
+                    poupancaData.length > 0 && selicData.length > 0 && cdiData.length > 0) {
+                    
+                    const poupanca = parseFloat(poupancaData[0].valor);
+                    const selic = parseFloat(selicData[0].valor);
+                    const cdi = parseFloat(cdiData[0].valor);
+                    
+                    // Calcular rendimentos anualizados aproximados
+                    const poupancaAnual = (Math.pow(1 + poupanca/100, 12) - 1) * 100;
+                    const selicAnual = selic;
+                    const cdiAnual = cdi;
+                    
+                    // Simulação com R$ 10.000
+                    const simPoupanca = 10000 * (poupancaAnual / 100);
+                    const simSelic = 10000 * (selicAnual / 100);
+                    const simCDI = 10000 * (cdiAnual / 100);
+                    
+                    // Determinar o melhor investimento
+                    let melhor = 'CDI';
+                    let melhorValor = cdiAnual;
+                    if (selicAnual > melhorValor) {
+                        melhor = 'SELIC';
+                        melhorValor = selicAnual;
+                    }
+                    if (poupancaAnual > melhorValor) {
+                        melhor = 'Poupança';
+                        melhorValor = poupancaAnual;
+                    }
+                    
+                    const content = `
+                        <div class="stats-row">
+                            <div class="stat-card">
+                                <div class="stat-value ${melhor === 'Poupança' ? 'positive' : ''}">${poupancaAnual.toFixed(2)}%</div>
+                                <div class="stat-label">Poupança</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value ${melhor === 'SELIC' ? 'positive' : ''}">${selicAnual.toFixed(2)}%</div>
+                                <div class="stat-label">SELIC</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value ${melhor === 'CDI' ? 'positive' : ''}">${cdiAnual.toFixed(2)}%</div>
+                                <div class="stat-label">CDI</div>
+                            </div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Melhor opção:</span>
+                            <span class="metric-value positive">${melhor} (${melhorValor.toFixed(2)}% a.a.)</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Simulação R$ 10.000/ano:</span>
+                            <span class="metric-value">Poupança: +${formatCurrency(simPoupanca).replace('R$', 'R$').trim()}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label"></span>
+                            <span class="metric-value">SELIC: +${formatCurrency(simSelic).replace('R$', 'R$').trim()}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label"></span>
+                            <span class="metric-value">CDI: +${formatCurrency(simCDI).replace('R$', 'R$').trim()}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Observação:</span>
+                            <span class="metric-value">Valores aproximados, sem impostos</span>
+                        </div>
+                    `;
+                    showSuccess('comparativo_investimentos', content);
+                } else {
+                    showError('comparativo_investimentos', 'Erro ao carregar dados para comparação');
+                }
+            } catch (error) {
+                console.error('Erro Comparativo:', error);
+                showError('comparativo_investimentos', `Erro no comparativo: ${error.message}`);
+            }
+        }
+
         // Função para buscar dados da Taxa de Inadimplência
         async function fetchInadimplencia() {
             const apiUrl = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.21082/dados/ultimos/2?formato=json";
@@ -1645,7 +1834,7 @@
             
             showProgressBar();
             let completed = 0;
-            const total = 11; // Número total de APIs (incluindo PIB)
+            const total = 13; // Número total de APIs (incluindo Poupança e Comparativo)
             
             const updateProgressAndComplete = () => {
                 completed++;
@@ -1680,9 +1869,11 @@
             setTimeout(() => fetchWithProgress(fetchPIB), 1100);
             setTimeout(() => fetchWithProgress(fetchIBCBr), 1300);
             setTimeout(() => fetchWithProgress(fetchBalancaComercial), 1500);
-            setTimeout(() => fetchWithProgress(fetchCredito), 1700);
-            setTimeout(() => fetchWithProgress(fetchCarteira), 1900);
-            setTimeout(() => fetchWithProgress(fetchInadimplencia), 2100);
+            setTimeout(() => fetchWithProgress(fetchPoupanca), 1700);
+            setTimeout(() => fetchWithProgress(fetchComparativoInvestimentos), 1900);
+            setTimeout(() => fetchWithProgress(fetchCredito), 2100);
+            setTimeout(() => fetchWithProgress(fetchCarteira), 2300);
+            setTimeout(() => fetchWithProgress(fetchInadimplencia), 2500);
         }
 
         // Função para formatar números grandes
