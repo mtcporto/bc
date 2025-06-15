@@ -22,12 +22,14 @@ Uma interface moderna e elegante para visualizar dados econômicos do Banco Cent
 - **Carregamento Automático**: Todos os dados são carregados automaticamente ao abrir a página
 - **Câmbio**: PTAX USD e EUR com cotações de compra e venda
 - **Juros**: Taxa SELIC atualizada
-- **Inflação**: IPCA mensal
+- **Inflação**: IPCA mensal, IPCA-15 (prévia) e IGP-M (contratos)
 - **CDI**: Certificado de Depósito Interbancário com gráfico histórico
 - **PIB**: Produto Interno Bruto trimestral com variações e gráfico histórico
 - **IBC-Br**: Índice de Atividade Econômica (proxy do PIB mensal)
 - **Balança Comercial**: Saldo da balança comercial em US$ milhões
 - **Reservas Internacionais**: Reservas em moeda estrangeira com análise contextual
+- **Construção**: INCC (Índice Nacional de Custo da Construção)
+- **Emprego**: Taxa de Desemprego com análise social
 - **Poupança**: Rendimento mensal da caderneta de poupança com simulações
 - **Comparativo**: Poupança vs SELIC vs CDI com simulações de investimento
 - **Crédito**: Taxas de juros, carteira total e taxa de inadimplência
@@ -75,12 +77,16 @@ Todas as APIs são do Banco Central do Brasil:
 - **PTAX USD**: `olinda.bcb.gov.br` - Cotação do Dólar
 - **PTAX EUR**: `api.bcb.gov.br/dados/serie/bcdata.sgs.21620` - Cotação do Euro
 - **SELIC**: `api.bcb.gov.br/dados/serie/bcdata.sgs.11` - Taxa básica de juros
-- **IPCA**: `api.bcb.gov.br/dados/serie/bcdata.sgs.433` - Inflação
+- **IPCA**: `api.bcb.gov.br/dados/serie/bcdata.sgs.433` - Inflação oficial
+- **IPCA-15**: `api.bcb.gov.br/dados/serie/bcdata.sgs.7478` - Prévia da inflação
+- **IGP-M**: `api.bcb.gov.br/dados/serie/bcdata.sgs.189` - Índice geral de preços
 - **CDI**: `api.bcb.gov.br/dados/serie/bcdata.sgs.12` - Certificado de Depósito
 - **PIB**: `api.bcb.gov.br/dados/serie/bcdata.sgs.4385` - Produto Interno Bruto
 - **IBC-Br**: `api.bcb.gov.br/dados/serie/bcdata.sgs.24363` - Atividade Econômica
 - **Balança Comercial**: `api.bcb.gov.br/dados/serie/bcdata.sgs.22707` - Saldo comercial
 - **Reservas Internacionais**: `api.bcb.gov.br/dados/serie/bcdata.sgs.3546` - Reservas em USD
+- **INCC**: `api.bcb.gov.br/dados/serie/bcdata.sgs.192` - Custo da construção
+- **Taxa de Desemprego**: `api.bcb.gov.br/dados/serie/bcdata.sgs.24369` - Desocupação
 - **Poupança**: `api.bcb.gov.br/dados/serie/bcdata.sgs.195` - Rendimento da poupança
 - **Crédito**: `api.bcb.gov.br/dados/serie/bcdata.sgs.7456` - Taxa de juros
 - **Carteira**: `api.bcb.gov.br/dados/serie/bcdata.sgs.20727` - Volume de crédito
