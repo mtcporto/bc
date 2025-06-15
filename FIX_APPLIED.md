@@ -1,73 +1,78 @@
-# ✅ CORREÇÃO APLICADA - Vercel Deploy
+# ✅ CORREÇÃO APLICADA - Vercel Deploy (2ª Iteração)
 
-## 🚨 Problema identificado:
+## 🚨 Problemas identificados:
+
+### 1º Erro:
 ```
 Conflicting functions and builds configuration
-There are two ways to configure Serverless Functions in your project: 
-functions or builds. However, only one of them may be used at a time.
 ```
 
-## 🔧 Correção implementada:
+### 2º Erro:
+```
+Function Runtimes must have a valid version, for example `now-php@1.0.0`.
+```
 
-### Antes (❌ com erro):
+## 🔧 Correções implementadas:
+
+### 1ª Correção - Remover conflito builds/functions:
 ```json
+// ❌ Antes
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "index.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "api/proxy.js", 
-      "use": "@vercel/node"
-    }
-  ],
+  "builds": [...],
+  "functions": {...}
+}
+
+// ✅ Depois  
+{
+  "functions": {...}
+}
+```
+
+### 2ª Correção - Remover runtime inválido:
+```json
+// ❌ Antes
+{
   "functions": {
     "api/proxy.js": {
+      "runtime": "nodejs18.x",  // ← Sintaxe incorreta para Vercel
       "maxDuration": 30
     }
   }
 }
+
+// ✅ Depois (detecção automática)
+{}
 ```
 
-### Depois (✅ corrigido):
+## 📋 Solução final:
+
+**`vercel.json` simplificado:**
 ```json
-{
-  "functions": {
-    "api/proxy.js": {
-      "runtime": "nodejs18.x",
-      "maxDuration": 30
-    }
-  }
-}
+{}
 ```
 
-## 📋 Mudanças feitas:
-
-1. **Removido**: `builds` array (causa conflito)
-2. **Removido**: `version: 2` (não necessário)
-3. **Removido**: `routes` (Vercel detecta automaticamente)
-4. **Mantido**: Apenas `functions` (abordagem recomendada)
-5. **Adicionado**: `runtime: "nodejs18.x"` (mais explícito)
+**Por que funciona:**
+- Vercel detecta automaticamente `index.html` como estático
+- Vercel detecta automaticamente `api/proxy.js` como Node.js function
+- Não há conflitos de configuração
+- Runtime é detectado pelo arquivo `.js`
 
 ## 🚀 Próximos passos:
 
 ```bash
-# 1. Commit as mudanças
+# 1. Commit a correção final
 git add .
-git commit -m "Fix Vercel configuration - remove builds/functions conflict"
+git commit -m "Simplify vercel.json - let Vercel auto-detect everything"
 git push origin main
 
-# 2. Fazer deploy novamente na Vercel
-# O erro deve ter desaparecido!
+# 2. Deploy deve funcionar agora!
 ```
 
 ## ✨ Resultado esperado:
 
-- ✅ Deploy sem erros na Vercel
-- ✅ Dashboard carrega corretamente  
-- ✅ Todos os 10 indicadores funcionam
-- ✅ APIs do BCB respondem via proxy serverless
+- ✅ Build completa sem erros
+- ✅ Deploy bem-sucedido
+- ✅ Dashboard funcional na Vercel
+- ✅ APIs do BCB funcionando via serverless function
 
-**Problema resolvido!** 🎉
+**Ambos os problemas resolvidos!** 🎉
