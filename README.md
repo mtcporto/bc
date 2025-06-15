@@ -2,6 +2,20 @@
 
 Uma interface moderna e elegante para visualizar dados econômicos do Banco Central do Brasil.
 
+## 📁 Estrutura do Projeto
+
+```
+/
+├── public/
+│   └── index.html          # Frontend da aplicação
+├── api/
+│   └── proxy.js           # Serverless function (Vercel)
+├── proxy-server.js        # Servidor local de desenvolvimento
+├── package.json
+├── vercel.json            # Configuração Vercel
+└── .vercelignore          # Arquivos ignorados no deploy
+```
+
 ## 🌟 Funcionalidades
 
 ### 📊 Dados Econômicos
@@ -137,6 +151,38 @@ O servidor proxy é configurado com:
 - ✅ Cards organizados por categorias
 - ✅ Métricas visuais
 - ✅ Gráficos interativos
+
+## 🚀 Deploy na Vercel
+
+Este projeto está configurado para deploy automático na Vercel com suporte a serverless functions.
+
+### Estrutura para Deploy
+- **Frontend**: Arquivos estáticos em `public/`
+- **API**: Serverless functions em `api/`
+- **Configuração**: `vercel.json` otimizado
+
+### Como Fazer Deploy
+
+1. **Fork ou Clone** este repositório
+2. **Conecte na Vercel**: 
+   - Vá em [vercel.com](https://vercel.com)
+   - Importe o repositório
+   - Deploy automático configurado!
+
+3. **Configuração Automática**:
+   - ✅ Serverless functions ativadas
+   - ✅ CORS configurado
+   - ✅ Arquivos estáticos otimizados
+   - ✅ Output directory: `public/`
+
+### URLs de Produção
+- **Frontend**: `https://your-project.vercel.app/`
+- **API Proxy**: `https://your-project.vercel.app/api/proxy?url=...`
+
+### Desenvolvimento Local vs Produção
+O projeto detecta automaticamente o ambiente:
+- **Local**: Usa `http://localhost:3000/proxy`
+- **Vercel**: Usa `/api/proxy` (serverless)
 
 ## 📝 Licença
 

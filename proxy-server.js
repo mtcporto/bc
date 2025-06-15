@@ -111,9 +111,12 @@ app.get('/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Servir arquivos estáticos do diretório public
+app.use(express.static(path.join(__dirname, 'public')));
+
 // Rota para servir o index.html na raiz
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 app.listen(PORT, () => {

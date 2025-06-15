@@ -7,8 +7,8 @@
   "scripts": {
     "start": "node proxy-server.js",
     "dev": "node proxy-server.js",
-    "build": "echo 'No build step required for static deployment'",
-    "vercel-build": "echo 'Building for Vercel...'"
+    "build": "echo 'Static files ready for deployment'",
+    "vercel-build": "echo 'Vercel build completed - static files in public directory'"
   },
   "keywords": ["banco-central", "api", "economia", "brasil", "vercel", "dashboard"],
   "author": "",
