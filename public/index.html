@@ -1710,11 +1710,50 @@
                 const result2 = await response2.json();
                 const result3 = await response3.json();
                 
-                const poupancaData = result1.success ? result1.data : null;
-                const selicData = result2.success ? result2.data : null;
-                const cdiData = result3.success ? result3.data : null;
+                console.log('📊 Respostas brutas:', { result1, result2, result3 });
+                
+                // Parse dos dados - podem vir como string ou array
+                let poupancaData, selicData, cdiData;
+                
+                try {
+                    // Função helper para parse robusto
+                    const parseApiData = (result) => {
+                        if (!result.success) return null;
+                        
+                        let data = result.data;
+                        
+                        // Se é string, tentar parse
+                        if (typeof data === 'string') {
+                            try {
+                                data = JSON.parse(data);
+                            } catch (e) {
+                                console.warn('Falha no parse JSON da string:', data);
+                                return null;
+                            }
+                        }
+                        
+                        // Garantir que é array
+                        if (!Array.isArray(data)) {
+                            console.warn('Dados não são array:', data);
+                            return null;
+                        }
+                        
+                        return data;
+                    };
+                    
+                    poupancaData = parseApiData(result1);
+                    selicData = parseApiData(result2);
+                    cdiData = parseApiData(result3);
+                    
+                } catch (parseError) {
+                    console.error('❌ Erro no parse dos dados:', parseError);
+                    throw new Error('Erro ao interpretar dados das APIs');
+                }
+                
+                console.log('📊 Dados parseados:', { poupancaData, selicData, cdiData });
                 
                 if (poupancaData && selicData && cdiData && 
+                    Array.isArray(poupancaData) && Array.isArray(selicData) && Array.isArray(cdiData) &&
                     poupancaData.length > 0 && selicData.length > 0 && cdiData.length > 0) {
                     
                     const poupancaValor = parseFloat(poupancaData[0].valor);
@@ -1727,9 +1766,11 @@
                         cdi: cdiValor 
                     });
                     
-                    // Validar se os dados estão corretos
-                    if (isNaN(poupancaValor) || isNaN(selicValor) || isNaN(cdiValor)) {
-                        throw new Error('Dados inválidos recebidos das APIs');
+                    // Validar se os dados estão corretos e são números válidos
+                    if (isNaN(poupancaValor) || isNaN(selicValor) || isNaN(cdiValor) ||
+                        poupancaValor <= 0 || selicValor <= 0 || cdiValor <= 0) {
+                        console.error('❌ Valores inválidos:', { poupancaValor, selicValor, cdiValor });
+                        throw new Error(`Dados inválidos: Poupança=${poupancaValor}, SELIC=${selicValor}, CDI=${cdiValor}`);
                     }
                     
                     // Converter poupança mensal para anual (juros compostos)
