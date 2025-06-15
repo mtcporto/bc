@@ -667,6 +667,21 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-home"></i>
+                            <span class="tooltip" data-tooltip="Índice Nacional de Custo da Construção Civil">INCC - Construção Civil</span>
+                        </div>
+                    </div>
+                    <div id="incc" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 
@@ -1822,6 +1837,118 @@
             }
         }
 
+        // Função para buscar dados do INCC (Custo da Construção)
+        async function fetchINCC() {
+            const apiUrl = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.192/dados/ultimos/4?formato=json";
+            
+            try {
+                const data = await fetchWithProxy(apiUrl, 'incc');
+                
+                if (data && data.length > 0) {
+                    const latest = data[data.length - 1];
+                    const valor = parseFloat(latest.valor);
+                    
+                    console.log('📊 INCC - valor:', valor);
+                    
+                    // Calcular variações
+                    let variacaoMensal = null;
+                    let variacaoTrimestral = null;
+                    let variacaoAnual = null;
+                    
+                    if (data.length > 1) {
+                        const anterior = parseFloat(data[data.length - 2].valor);
+                        variacaoMensal = ((valor - anterior) / anterior * 100).toFixed(2);
+                    }
+                    
+                    if (data.length >= 3) {
+                        const trimestre = parseFloat(data[data.length - 4].valor);
+                        variacaoTrimestral = ((valor - trimestre) / trimestre * 100).toFixed(2);
+                    }
+                    
+                    // Simular variação anual (aproximada usando trimestral * 4)
+                    if (variacaoTrimestral !== null) {
+                        variacaoAnual = (parseFloat(variacaoTrimestral) * 4).toFixed(2);
+                    }
+                    
+                    // Análise do impacto
+                    let impactoAnalise = 'Estável';
+                    let classeImpacto = '';
+                    
+                    if (variacaoMensal !== null) {
+                        const varMensal = parseFloat(variacaoMensal);
+                        if (varMensal > 1.0) {
+                            impactoAnalise = 'Alta pressão de custos';
+                            classeImpacto = 'negative';
+                        } else if (varMensal > 0.5) {
+                            impactoAnalise = 'Pressão moderada';
+                            classeImpacto = '';
+                        } else if (varMensal < -0.5) {
+                            impactoAnalise = 'Custos em queda';
+                            classeImpacto = 'positive';
+                        } else {
+                            impactoAnalise = 'Custos estáveis';
+                            classeImpacto = 'positive';
+                        }
+                    }
+                    
+                    // Simulação prática
+                    const custoPorM2Base = 1800; // R$ 1.800/m² como base aproximada
+                    const custoPorM2Atual = custoPorM2Base * (valor / 100); // Ajuste pelo índice
+                    const custoObra100m2 = custoPorM2Atual * 100;
+                    
+                    const content = `
+                        <div class="stats-row">
+                            <div class="stat-card">
+                                <div class="stat-value">${valor.toFixed(2)}</div>
+                                <div class="stat-label">Índice Base</div>
+                            </div>
+                            ${variacaoMensal !== null ? `
+                            <div class="stat-card">
+                                <div class="stat-value ${parseFloat(variacaoMensal) <= 0.5 ? 'positive' : 'negative'}">${parseFloat(variacaoMensal) >= 0 ? '+' : ''}${variacaoMensal}%</div>
+                                <div class="stat-label">Variação Mensal</div>
+                            </div>
+                            ` : ''}
+                            ${variacaoAnual !== null ? `
+                            <div class="stat-card">
+                                <div class="stat-value ${parseFloat(variacaoAnual) <= 6 ? 'positive' : 'negative'}">${parseFloat(variacaoAnual) >= 0 ? '+' : ''}${variacaoAnual}%</div>
+                                <div class="stat-label">Projeção Anual</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Impacto:</span>
+                            <span class="metric-value ${classeImpacto}">${impactoAnalise}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Simulação 100m²:</span>
+                            <span class="metric-value">~${formatCurrency(custoObra100m2)}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Custo por m²:</span>
+                            <span class="metric-value">~${formatCurrency(custoPorM2Atual)}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Data:</span>
+                            <span class="metric-value">${formatDate(latest.data)}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Relevância:</span>
+                            <span class="metric-value">Preços de imóveis e obras</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Observação:</span>
+                            <span class="metric-value">Simulação baseada em estimativas regionais</span>
+                        </div>
+                    `;
+                    showSuccess('incc', content);
+                } else {
+                    showError('incc', 'Nenhum dado encontrado');
+                }
+            } catch (error) {
+                console.error('Erro INCC:', error);
+            }
+        }
+
         // Função para buscar dados da Poupança
         async function fetchPoupanca() {
             const apiUrl = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.195/dados/ultimos/3?formato=json";
@@ -2132,7 +2259,7 @@
             
             showProgressBar();
             let completed = 0;
-            const total = 15; // Número total de APIs (incluindo Reservas)
+            const total = 16; // Número total de APIs (incluindo INCC)
             
             const updateProgressAndComplete = () => {
                 completed++;
@@ -2169,11 +2296,12 @@
             setTimeout(() => fetchWithProgress(fetchBalancaComercial), 1500);
             setTimeout(() => fetchWithProgress(fetchReservasInternacionais), 1700);
             setTimeout(() => fetchWithProgress(fetchAnaliseReservas), 1900);
-            setTimeout(() => fetchWithProgress(fetchPoupanca), 2100);
-            setTimeout(() => fetchWithProgress(fetchComparativoInvestimentos), 2300);
-            setTimeout(() => fetchWithProgress(fetchCredito), 2500);
-            setTimeout(() => fetchWithProgress(fetchCarteira), 2700);
-            setTimeout(() => fetchWithProgress(fetchInadimplencia), 2900);
+            setTimeout(() => fetchWithProgress(fetchINCC), 2100);
+            setTimeout(() => fetchWithProgress(fetchPoupanca), 2300);
+            setTimeout(() => fetchWithProgress(fetchComparativoInvestimentos), 2500);
+            setTimeout(() => fetchWithProgress(fetchCredito), 2700);
+            setTimeout(() => fetchWithProgress(fetchCarteira), 2900);
+            setTimeout(() => fetchWithProgress(fetchInadimplencia), 3100);
         }
 
         // Função para formatar números grandes
