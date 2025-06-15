@@ -1625,6 +1625,8 @@
                     const latest = data[data.length - 1];
                     const valor = parseFloat(latest.valor);
                     
+                    console.log('📊 Poupança - valor original:', valor);
+                    
                     // Calcular variação mensal se temos dados suficientes
                     let variacaoMensal = null;
                     if (data.length > 1) {
@@ -1632,16 +1634,25 @@
                         variacaoMensal = (valor - anterior).toFixed(4);
                     }
                     
-                    // Calcular rendimento anualizado (aproximado)
-                    const rendimentoAnual = (Math.pow(1 + valor/100, 12) - 1) * 100;
+                    // Calcular rendimento anualizado usando juros compostos
+                    // Fórmula: (1 + taxa_mensal)^12 - 1
+                    const taxaMensal = valor / 100; // Converter % para decimal
+                    const rendimentoAnual = ((Math.pow(1 + taxaMensal, 12) - 1) * 100);
                     
-                    // Simular valor em R$ 10.000 investidos
-                    const simulacao10k = 10000 * (valor / 100);
+                    // Simular valor em R$ 10.000 investidos (mensal)
+                    const simulacao10kMensal = 10000 * taxaMensal;
+                    
+                    console.log('📊 Poupança calculada:', {
+                        valorOriginal: valor,
+                        taxaMensal: taxaMensal,
+                        rendimentoAnual: rendimentoAnual,
+                        simulacao10kMensal: simulacao10kMensal
+                    });
                     
                     const content = `
                         <div class="stats-row">
                             <div class="stat-card">
-                                <div class="stat-value">${formatPercentage(valor)}</div>
+                                <div class="stat-value">${valor.toFixed(2)}%</div>
                                 <div class="stat-label">Rendimento Mensal</div>
                             </div>
                             <div class="stat-card">
@@ -1651,7 +1662,7 @@
                         </div>
                         <div class="metric">
                             <span class="metric-label">Simulação R$ 10.000:</span>
-                            <span class="metric-value positive">+${formatCurrency(simulacao10k).replace('R$', 'R$').trim()}/mês</span>
+                            <span class="metric-value positive">+${formatCurrency(simulacao10kMensal).replace('R$', 'R$').trim()}/mês</span>
                         </div>
                         ${variacaoMensal !== null ? `
                         <div class="metric">
@@ -1706,33 +1717,54 @@
                 if (poupancaData && selicData && cdiData && 
                     poupancaData.length > 0 && selicData.length > 0 && cdiData.length > 0) {
                     
-                    const poupanca = parseFloat(poupancaData[0].valor);
-                    const selic = parseFloat(selicData[0].valor);
-                    const cdi = parseFloat(cdiData[0].valor);
+                    const poupancaValor = parseFloat(poupancaData[0].valor);
+                    const selicValor = parseFloat(selicData[0].valor);
+                    const cdiValor = parseFloat(cdiData[0].valor);
                     
-                    console.log('📊 Dados do comparativo:', { poupanca, selic, cdi });
+                    console.log('📊 Dados brutos do comparativo:', { 
+                        poupanca: poupancaValor, 
+                        selic: selicValor, 
+                        cdi: cdiValor 
+                    });
                     
-                    // Calcular rendimentos anualizados aproximados
-                    const poupancaAnual = (Math.pow(1 + poupanca/100, 12) - 1) * 100;
-                    const selicAnual = selic;
-                    const cdiAnual = cdi;
+                    // Validar se os dados estão corretos
+                    if (isNaN(poupancaValor) || isNaN(selicValor) || isNaN(cdiValor)) {
+                        throw new Error('Dados inválidos recebidos das APIs');
+                    }
                     
-                    // Simulação com R$ 10.000
+                    // Converter poupança mensal para anual (juros compostos)
+                    const poupancaAnual = ((Math.pow(1 + poupancaValor/100, 12) - 1) * 100);
+                    
+                    // SELIC e CDI estão como taxa diária, converter para anual
+                    // Fórmula: (1 + taxa_diaria)^252 - 1 (252 dias úteis por ano)
+                    const selicAnual = ((Math.pow(1 + selicValor/100, 252) - 1) * 100);
+                    const cdiAnual = ((Math.pow(1 + cdiValor/100, 252) - 1) * 100);
+                    
+                    console.log('📊 Rendimentos anualizados:', {
+                        poupancaAnual: poupancaAnual,
+                        selicAnual: selicAnual,
+                        cdiAnual: cdiAnual
+                    });
+                    
+                    // Simulação com R$ 10.000 (anual)
                     const simPoupanca = 10000 * (poupancaAnual / 100);
                     const simSelic = 10000 * (selicAnual / 100);
                     const simCDI = 10000 * (cdiAnual / 100);
                     
                     // Determinar o melhor investimento
-                    let melhor = 'CDI';
-                    let melhorValor = cdiAnual;
+                    let melhor = 'Poupança';
+                    let melhorValor = poupancaAnual;
+                    
                     if (selicAnual > melhorValor) {
                         melhor = 'SELIC';
                         melhorValor = selicAnual;
                     }
-                    if (poupancaAnual > melhorValor) {
-                        melhor = 'Poupança';
-                        melhorValor = poupancaAnual;
+                    if (cdiAnual > melhorValor) {
+                        melhor = 'CDI';
+                        melhorValor = cdiAnual;
                     }
+                    
+                    console.log('🏆 Melhor investimento:', melhor, melhorValor.toFixed(2) + '%');
                     
                     const content = `
                         <div class="stats-row">
@@ -1755,15 +1787,15 @@
                         </div>
                         <div class="metric">
                             <span class="metric-label">Simulação R$ 10.000/ano:</span>
-                            <span class="metric-value">Poupança: +${formatCurrency(simPoupanca).replace('R$', 'R$').trim()}</span>
+                            <span class="metric-value">Poupança: +${formatCurrency(simPoupanca)}</span>
                         </div>
                         <div class="metric">
                             <span class="metric-label"></span>
-                            <span class="metric-value">SELIC: +${formatCurrency(simSelic).replace('R$', 'R$').trim()}</span>
+                            <span class="metric-value">SELIC: +${formatCurrency(simSelic)}</span>
                         </div>
                         <div class="metric">
                             <span class="metric-label"></span>
-                            <span class="metric-value">CDI: +${formatCurrency(simCDI).replace('R$', 'R$').trim()}</span>
+                            <span class="metric-value">CDI: +${formatCurrency(simCDI)}</span>
                         </div>
                         <div class="metric">
                             <span class="metric-label">Observação:</span>
