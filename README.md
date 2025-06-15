@@ -10,7 +10,9 @@ Uma interface moderna e elegante para visualizar dados econômicos do Banco Cent
 - **Juros**: Taxa SELIC atualizada
 - **Inflação**: IPCA mensal
 - **CDI**: Certificado de Depósito Interbancário com gráfico histórico
-- **Crédito**: Taxas de juros e carteira total
+- **IBC-Br**: Índice de Atividade Econômica (proxy do PIB mensal)
+- **Balança Comercial**: Saldo da balança comercial em US$ milhões
+- **Crédito**: Taxas de juros, carteira total e taxa de inadimplência
 
 ### 🎨 Interface
 - **Design Moderno**: Interface clean e responsiva
@@ -57,8 +59,11 @@ Todas as APIs são do Banco Central do Brasil:
 - **SELIC**: `api.bcb.gov.br/dados/serie/bcdata.sgs.11` - Taxa básica de juros
 - **IPCA**: `api.bcb.gov.br/dados/serie/bcdata.sgs.433` - Inflação
 - **CDI**: `api.bcb.gov.br/dados/serie/bcdata.sgs.12` - Certificado de Depósito
+- **IBC-Br**: `api.bcb.gov.br/dados/serie/bcdata.sgs.24363` - Atividade Econômica
+- **Balança Comercial**: `api.bcb.gov.br/dados/serie/bcdata.sgs.22707` - Saldo comercial
 - **Crédito**: `api.bcb.gov.br/dados/serie/bcdata.sgs.7456` - Taxa de juros
 - **Carteira**: `api.bcb.gov.br/dados/serie/bcdata.sgs.20727` - Volume de crédito
+- **Inadimplência**: `api.bcb.gov.br/dados/serie/bcdata.sgs.21082` - Taxa de inadimplência
 
 ## 🛠️ Tecnologias
 

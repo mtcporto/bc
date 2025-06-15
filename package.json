@@ -2,17 +2,22 @@
   "name": "bc",
   "version": "1.0.0",
   "description": "Banco Central Playground - Interface moderna para APIs do Banco Central",
-  "main": "proxy-server.js",
+  "main": "index.html",
   "type": "module",
   "scripts": {
     "start": "node proxy-server.js",
-    "dev": "node proxy-server.js"
+    "dev": "node proxy-server.js",
+    "build": "echo 'No build step required for static deployment'",
+    "vercel-build": "echo 'Building for Vercel...'"
   },
-  "keywords": ["banco-central", "api", "economia", "brasil"],
+  "keywords": ["banco-central", "api", "economia", "brasil", "vercel", "dashboard"],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "express": "^4.18.2",
     "cors": "^2.8.5"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

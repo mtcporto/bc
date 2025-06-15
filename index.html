@@ -268,6 +268,32 @@
             overflow-wrap: break-word;
         }
 
+        .metric-value.positive {
+            color: var(--success-color);
+        }
+
+        .metric-value.negative {
+            color: var(--warning-color);
+        }
+
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-bottom: 4px;
+            line-height: 1.2;
+            word-break: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .stat-value.positive {
+            color: var(--success-color);
+        }
+
+        .stat-value.negative {
+            color: var(--warning-color);
+        }
+
         .chart-container {
             margin-top: 20px;
             background: var(--bg-secondary);
@@ -291,16 +317,6 @@
             border: 1px solid var(--border-color);
             min-width: 140px;
             flex: 1;
-        }
-
-        .stat-value {
-            font-size: 1.6rem;
-            font-weight: bold;
-            color: var(--accent-color);
-            margin-bottom: 4px;
-            line-height: 1.2;
-            word-break: break-word;
-            overflow-wrap: break-word;
         }
 
         .stat-label {
@@ -551,6 +567,45 @@
             </div>
         </section>
 
+        <!-- Seção Atividade Econômica -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-area"></i>
+                Atividade Econômica
+            </h2>
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-industry"></i>
+                            <span class="tooltip" data-tooltip="Indicador mensal contemporâneo da atividade econômica nacional">IBC-Br</span>
+                        </div>
+                    </div>
+                    <div id="ibc_br" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-balance-scale"></i>
+                            <span class="tooltip" data-tooltip="Saldo da balança comercial brasileira">Balança Comercial</span>
+                        </div>
+                    </div>
+                    <div id="balanca_comercial" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Seção Crédito -->
         <section class="section">
             <h2 class="section-title">
@@ -587,6 +642,21 @@
                         </div>
                     </div>
                 </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span class="tooltip" data-tooltip="Percentual da carteira com atraso superior a 90 dias">Taxa de Inadimplência</span>
+                        </div>
+                    </div>
+                    <div id="inadimplencia" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
     </div>
@@ -597,11 +667,19 @@
             const currentHost = window.location.hostname;
             const currentProtocol = window.location.protocol;
             
+            // Se estamos no Vercel (vercel.app domain) ou em produção
+            if (currentHost.includes('vercel.app') || 
+                (currentHost !== 'localhost' && currentHost !== '127.0.0.1')) {
+                // Usar Vercel Serverless Function
+                return `${currentProtocol}//${currentHost}/api/proxy?url=`;
+            }
+            
             // Se estamos acessando via localhost na porta 3000, usar a mesma
             if (window.location.port === '3000') {
                 return `${currentProtocol}//${currentHost}:3000/proxy?url=`;
             }
-            // Caso contrário, assumir que o proxy está na porta 3000
+            
+            // Caso contrário, assumir que o proxy está na porta 3000 (desenvolvimento)
             return `${currentProtocol}//${currentHost}:3000/proxy?url=`;
         };
 
@@ -760,9 +838,17 @@
         // Funções de API melhoradas
         async function checkProxyHealth() {
             try {
-                const healthUrl = proxyUrl.replace('/proxy?url=', '/health');
-                const response = await fetch(healthUrl);
-                return response.ok;
+                // Para Vercel, verificar usando o endpoint de health
+                if (proxyUrl.includes('/api/proxy')) {
+                    const healthUrl = proxyUrl.replace('?url=', '?health=true');
+                    const response = await fetch(healthUrl);
+                    return response.ok;
+                } else {
+                    // Para desenvolvimento local
+                    const healthUrl = proxyUrl.replace('/proxy?url=', '/health');
+                    const response = await fetch(healthUrl);
+                    return response.ok;
+                }
             } catch {
                 return false;
             }
@@ -775,15 +861,20 @@
                 // Verificar se o proxy está funcionando
                 const proxyHealthy = await checkProxyHealth();
                 if (!proxyHealthy) {
-                    throw new Error('Servidor proxy não está disponível. Verifique se está rodando na porta 3000.');
+                    throw new Error('Servidor proxy não está disponível.');
                 }
                 
-                const response = await fetch(proxyUrl + encodeURIComponent(url), {
+                const proxyRequestUrl = proxyUrl + encodeURIComponent(url);
+                console.log(`🔗 Fazendo requisição via proxy: ${proxyRequestUrl}`);
+                
+                const response = await fetch(proxyRequestUrl, {
                     method: 'GET',
                     headers: {
                         'Accept': 'application/json',
                         'Content-Type': 'application/json'
-                    }
+                    },
+                    // Timeout de 25 segundos
+                    signal: AbortSignal.timeout(25000)
                 });
                 
                 if (!response.ok) {
@@ -791,6 +882,7 @@
                 }
                 
                 const result = await response.json();
+                console.log(`📊 Resposta para ${elementId}:`, result);
                 
                 if (!result.success) {
                     throw new Error(result.error || 'Erro desconhecido do servidor');
@@ -798,8 +890,12 @@
                 
                 return result.data;
             } catch (error) {
-                console.error('Erro na requisição:', error);
-                showError(elementId, `Erro: ${error.message}`);
+                console.error(`❌ Erro na requisição para ${elementId}:`, error);
+                let errorMessage = `Erro: ${error.message}`;
+                if (error.name === 'AbortError') {
+                    errorMessage = 'Timeout: API demorou para responder';
+                }
+                showError(elementId, errorMessage);
                 throw error;
             }
         }
@@ -994,6 +1090,9 @@
                     const isDark = currentTheme === 'dark';
                     
                     Highcharts.chart('grafico_cdi', {
+                        accessibility: {
+                            enabled: false
+                        },
                         chart: {
                             type: 'line',
                             backgroundColor: isDark ? '#161b22' : '#ffffff',
@@ -1156,13 +1255,175 @@
             }, 500);
         }
 
+        // Função para buscar dados do IBC-Br (Índice de Atividade Econômica)
+        async function fetchIBCBr() {
+            const apiUrl = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.24363/dados/ultimos/2?formato=json";
+            
+            try {
+                const data = await fetchWithProxy(apiUrl, 'ibc_br');
+                
+                if (data && data.length > 0) {
+                    const latest = data[data.length - 1];
+                    const valor = parseFloat(latest.valor);
+                    
+                    // Calcular variação se temos dados suficientes
+                    let variacao = null;
+                    if (data.length > 1) {
+                        const anterior = parseFloat(data[data.length - 2].valor);
+                        variacao = ((valor - anterior) / anterior * 100).toFixed(2);
+                    }
+                    
+                    const content = `
+                        <div class="stats-row">
+                            <div class="stat-card">
+                                <div class="stat-value">${valor.toFixed(2)}</div>
+                                <div class="stat-label">Índice</div>
+                            </div>
+                            ${variacao !== null ? `
+                            <div class="stat-card">
+                                <div class="stat-value ${parseFloat(variacao) >= 0 ? 'positive' : 'negative'}">${parseFloat(variacao) >= 0 ? '+' : ''}${variacao}%</div>
+                                <div class="stat-label">Variação Mensal</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Data:</span>
+                            <span class="metric-value">${formatDate(latest.data)}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Impacto:</span>
+                            <span class="metric-value">Indicador proxy do PIB mensal</span>
+                        </div>
+                    `;
+                    showSuccess('ibc_br', content);
+                } else {
+                    showError('ibc_br', 'Nenhum dado encontrado');
+                }
+            } catch (error) {
+                console.error('Erro IBC-Br:', error);
+            }
+        }
+
+        // Função para buscar dados da Balança Comercial
+        async function fetchBalancaComercial() {
+            const apiUrl = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.22707/dados/ultimos/2?formato=json";
+            
+            try {
+                const data = await fetchWithProxy(apiUrl, 'balanca_comercial');
+                
+                if (data && data.length > 0) {
+                    const latest = data[data.length - 1];
+                    const valor = parseFloat(latest.valor);
+                    
+                    // Calcular variação se temos dados suficientes
+                    let variacao = null;
+                    if (data.length > 1) {
+                        const anterior = parseFloat(data[data.length - 2].valor);
+                        variacao = valor - anterior;
+                    }
+                    
+                    const content = `
+                        <div class="stats-row">
+                            <div class="stat-card">
+                                <div class="stat-value ${valor >= 0 ? 'positive' : 'negative'}">US$ ${formatNumber(valor)}</div>
+                                <div class="stat-label">Saldo (Milhões)</div>
+                            </div>
+                            ${variacao !== null ? `
+                            <div class="stat-card">
+                                <div class="stat-value ${variacao >= 0 ? 'positive' : 'negative'}">${variacao >= 0 ? '+' : ''}US$ ${formatNumber(variacao)}</div>
+                                <div class="stat-label">Variação Mensal</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Data:</span>
+                            <span class="metric-value">${formatDate(latest.data)}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Impacto:</span>
+                            <span class="metric-value">Competitividade externa do país</span>
+                        </div>
+                    `;
+                    showSuccess('balanca_comercial', content);
+                } else {
+                    showError('balanca_comercial', 'Nenhum dado encontrado');
+                }
+            } catch (error) {
+                console.error('Erro Balança Comercial:', error);
+            }
+        }
+
+        // Função para buscar dados da Taxa de Inadimplência
+        async function fetchInadimplencia() {
+            const apiUrl = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.21082/dados/ultimos/2?formato=json";
+            
+            try {
+                const data = await fetchWithProxy(apiUrl, 'inadimplencia');
+                
+                if (data && data.length > 0) {
+                    const latest = data[data.length - 1];
+                    const valor = parseFloat(latest.valor);
+                    
+                    // Calcular variação se temos dados suficientes
+                    let variacao = null;
+                    if (data.length > 1) {
+                        const anterior = parseFloat(data[data.length - 2].valor);
+                        variacao = (valor - anterior).toFixed(2);
+                    }
+                    
+                    // Determinar nível de risco
+                    let nivelRisco = 'Moderado';
+                    let classeRisco = '';
+                    if (valor > 5) {
+                        nivelRisco = 'Alto';
+                        classeRisco = 'negative';
+                    } else if (valor < 3) {
+                        nivelRisco = 'Baixo';
+                        classeRisco = 'positive';
+                    }
+                    
+                    const content = `
+                        <div class="stats-row">
+                            <div class="stat-card">
+                                <div class="stat-value ${classeRisco}">${valor.toFixed(2)}%</div>
+                                <div class="stat-label">Taxa de Inadimplência</div>
+                            </div>
+                            ${variacao !== null ? `
+                            <div class="stat-card">
+                                <div class="stat-value ${parseFloat(variacao) <= 0 ? 'positive' : 'negative'}">${parseFloat(variacao) >= 0 ? '+' : ''}${variacao} p.p.</div>
+                                <div class="stat-label">Variação Mensal</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Nível:</span>
+                            <span class="metric-value ${classeRisco}">${nivelRisco}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Data:</span>
+                            <span class="metric-value">${formatDate(latest.data)}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Impacto:</span>
+                            <span class="metric-value">Qualidade da carteira de crédito</span>
+                        </div>
+                    `;
+                    showSuccess('inadimplencia', content);
+                } else {
+                    showError('inadimplencia', 'Nenhum dado encontrado');
+                }
+            } catch (error) {
+                console.error('Erro Taxa de Inadimplência:', error);
+            }
+        }
+
         // Função para carregar todos os dados automaticamente
         async function loadAllData() {
             console.log('🚀 Carregando todos os dados automaticamente...');
             
             showProgressBar();
             let completed = 0;
-            const total = 7; // Número total de APIs
+            const total = 10; // Número total de APIs
             
             const updateProgressAndComplete = () => {
                 completed++;
@@ -1194,8 +1455,25 @@
             setTimeout(() => fetchWithProgress(fetchSELIC), 500);
             setTimeout(() => fetchWithProgress(fetchIPCA), 700);
             setTimeout(() => fetchWithProgress(fetchCDI), 900);
-            setTimeout(() => fetchWithProgress(fetchCredito), 1100);
-            setTimeout(() => fetchWithProgress(fetchCarteira), 1300);
+            setTimeout(() => fetchWithProgress(fetchIBCBr), 1100);
+            setTimeout(() => fetchWithProgress(fetchBalancaComercial), 1300);
+            setTimeout(() => fetchWithProgress(fetchCredito), 1500);
+            setTimeout(() => fetchWithProgress(fetchCarteira), 1700);
+            setTimeout(() => fetchWithProgress(fetchInadimplencia), 1900);
+        }
+
+        // Função para formatar números grandes
+        function formatNumber(num) {
+            if (Math.abs(num) >= 1000) {
+                return new Intl.NumberFormat('pt-BR', {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 1
+                }).format(num);
+            }
+            return new Intl.NumberFormat('pt-BR', {
+                minimumFractionDigits: 1,
+                maximumFractionDigits: 1
+            }).format(num);
         }
 
         // Inicialização
