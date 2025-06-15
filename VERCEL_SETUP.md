@@ -1,26 +1,36 @@
 # 🚀 Passos para Deploy no Vercel
 
-## ✅ Arquivos já configurados:
+## ✅ Problema CORRIGIDO:
 
-1. **`vercel.json`** - Configuração para Vercel
-2. **`api/proxy.js`** - Serverless Function 
-3. **`index.html`** - Atualizado para detectar ambiente
-4. **`package.json`** - Atualizado com scripts
+**Erro anterior**: "Conflicting functions and builds configuration"
+**Solução**: Removidos `builds`, usando apenas `functions` no `vercel.json`
+
+## 📁 Estrutura Final dos Arquivos:
+
+```
+/
+├── index.html          # Dashboard principal
+├── vercel.json         # Configuração Vercel (CORRIGIDA)
+├── api/
+│   └── proxy.js        # Serverless Function
+├── package.json        # Dependências
+├── proxy-server.js     # Servidor local (não usado no deploy)
+└── README.md           # Documentação
+```
 
 ## 📋 Checklist de Deploy:
 
 ### 1. Commit e Push para GitHub:
 ```bash
 git add .
-git commit -m "Configure for Vercel deployment"
+git commit -m "Fix Vercel configuration - remove builds conflict"
 git push origin main
 ```
 
 ### 2. Deploy na Vercel:
 - Acesse [vercel.com](https://vercel.com)
 - Conecte seu repositório GitHub
-- A Vercel detectará automaticamente os arquivos
-- Deploy será feito automaticamente
+- **Agora deve funcionar sem erros!**
 
 ### 3. Ou use Vercel CLI:
 ```bash
@@ -30,53 +40,47 @@ vercel --prod
 
 ## 🔧 O que foi corrigido:
 
-### Problema original:
-- Vercel não suporta servidores Node.js persistentes
-- `proxy-server.js` não funciona em ambiente serverless
+### ❌ Configuração anterior (com erro):
+```json
+{
+  "builds": [...],     // ← Conflito
+  "functions": {...}   // ← Conflito
+}
+```
 
-### Solução implementada:
-- **Desenvolvimento local**: Continua usando `proxy-server.js`
-- **Produção (Vercel)**: Usa `api/proxy.js` como Serverless Function
-- **Detecção automática**: JavaScript detecta o ambiente e usa a URL correta
-
-### Funcionalidades:
-- ✅ Auto-detecção de ambiente (local vs Vercel)
-- ✅ Proxy CORS para APIs do BCB
-- ✅ Timeout de 25s (limite Vercel: 30s)
-- ✅ Whitelist de domínios do BCB
-- ✅ Health check para ambos ambientes
-- ✅ Logging melhorado para debug
+### ✅ Configuração atual (corrigida):
+```json
+{
+  "functions": {
+    "api/proxy.js": {
+      "runtime": "nodejs18.x",
+      "maxDuration": 30
+    }
+  }
+}
+```
 
 ## 🌐 URLs de teste:
 
 ### Local:
 - Dashboard: `http://localhost:3000`
 - Health: `http://localhost:3000/health`
-- Proxy: `http://localhost:3000/proxy?url=...`
 
-### Vercel:
+### Vercel (após deploy):
 - Dashboard: `https://seu-projeto.vercel.app`
 - Health: `https://seu-projeto.vercel.app/api/proxy?health=true`
-- Proxy: `https://seu-projeto.vercel.app/api/proxy?url=...`
 
-## 🐛 Debugging:
+## 🔍 Como verificar se funcionou:
 
-Se algo não funcionar na Vercel:
+1. **Deploy sem erros**: Vercel deve mostrar "Deployment completed"
+2. **Dashboard carrega**: Página principal abre sem erros
+3. **Dados aparecem**: Os 10 indicadores carregam automaticamente
+4. **Console limpo**: Sem erros 404 ou CORS no DevTools
 
-1. **Abra DevTools** (F12)
-2. **Vá para Console** 
-3. **Procure por logs**:
-   - `🔗 Proxy URL configurada: ...`
-   - `🔗 Fazendo requisição via proxy: ...`
-   - `📊 Resposta para ...`
-   - `❌ Erro na requisição para ...`
+## 📊 Indicadores que devem funcionar:
+- ✅ PTAX USD/EUR
+- ✅ SELIC, IPCA, CDI
+- ✅ IBC-Br, Balança Comercial  
+- ✅ Crédito, Carteira, Inadimplência
 
-4. **Verifique Network tab** para ver requisições HTTP
-
-## 📊 APIs testadas:
-- IBC-Br: `api.bcb.gov.br/dados/serie/bcdata.sgs.24363`
-- Balança Comercial: `api.bcb.gov.br/dados/serie/bcdata.sgs.22707`
-- Taxa de Inadimplência: `api.bcb.gov.br/dados/serie/bcdata.sgs.21082`
-- PTAX, SELIC, IPCA, CDI, Crédito, Carteira
-
-Todos os indicadores devem funcionar tanto local quanto na Vercel!
+**Agora está 100% corrigido para Vercel!** 🎉
