@@ -27,6 +27,7 @@ Uma interface moderna e elegante para visualizar dados econômicos do Banco Cent
 - **PIB**: Produto Interno Bruto trimestral com variações e gráfico histórico
 - **IBC-Br**: Índice de Atividade Econômica (proxy do PIB mensal)
 - **Balança Comercial**: Saldo da balança comercial em US$ milhões
+- **Reservas Internacionais**: Reservas em moeda estrangeira com análise contextual
 - **Poupança**: Rendimento mensal da caderneta de poupança com simulações
 - **Comparativo**: Poupança vs SELIC vs CDI com simulações de investimento
 - **Crédito**: Taxas de juros, carteira total e taxa de inadimplência
@@ -79,6 +80,7 @@ Todas as APIs são do Banco Central do Brasil:
 - **PIB**: `api.bcb.gov.br/dados/serie/bcdata.sgs.4385` - Produto Interno Bruto
 - **IBC-Br**: `api.bcb.gov.br/dados/serie/bcdata.sgs.24363` - Atividade Econômica
 - **Balança Comercial**: `api.bcb.gov.br/dados/serie/bcdata.sgs.22707` - Saldo comercial
+- **Reservas Internacionais**: `api.bcb.gov.br/dados/serie/bcdata.sgs.3546` - Reservas em USD
 - **Poupança**: `api.bcb.gov.br/dados/serie/bcdata.sgs.195` - Rendimento da poupança
 - **Crédito**: `api.bcb.gov.br/dados/serie/bcdata.sgs.7456` - Taxa de juros
 - **Carteira**: `api.bcb.gov.br/dados/serie/bcdata.sgs.20727` - Volume de crédito

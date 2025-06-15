@@ -631,6 +631,45 @@
             </div>
         </section>
 
+        <!-- Seção Indicadores Macroeconômicos -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-globe-americas"></i>
+                Indicadores Macroeconômicos
+            </h2>
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-shield-alt"></i>
+                            <span class="tooltip" data-tooltip="Reservas em moeda estrangeira do Banco Central">Reservas Internacionais</span>
+                        </div>
+                    </div>
+                    <div id="reservas_internacionais" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-calculator"></i>
+                            <span class="tooltip" data-tooltip="Reservas por habitante e cobertura de importações">Análise das Reservas</span>
+                        </div>
+                    </div>
+                    <div id="analise_reservas" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- Seção Investimentos -->
         <section class="section">
             <h2 class="section-title">
@@ -1614,6 +1653,175 @@
             }
         }
 
+        // Função para buscar dados das Reservas Internacionais
+        async function fetchReservasInternacionais() {
+            const apiUrl = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.3546/dados/ultimos/3?formato=json";
+            
+            try {
+                const data = await fetchWithProxy(apiUrl, 'reservas_internacionais');
+                
+                if (data && data.length > 0) {
+                    const latest = data[data.length - 1];
+                    const valor = parseFloat(latest.valor);
+                    
+                    console.log('📊 Reservas Internacionais - valor:', valor);
+                    
+                    // Calcular variação mensal se temos dados suficientes
+                    let variacaoMensal = null;
+                    let variacaoPercentual = null;
+                    if (data.length > 1) {
+                        const anterior = parseFloat(data[data.length - 2].valor);
+                        variacaoMensal = valor - anterior;
+                        variacaoPercentual = ((valor - anterior) / anterior * 100).toFixed(2);
+                    }
+                    
+                    // Converter para formato mais legível
+                    const valorBilhoes = valor / 1000; // Assumindo que vem em milhões USD
+                    
+                    // Classificar nível das reservas
+                    let nivelReservas = 'Adequado';
+                    let classeNivel = 'positive';
+                    if (valorBilhoes < 200) {
+                        nivelReservas = 'Baixo';
+                        classeNivel = 'negative';
+                    } else if (valorBilhoes > 400) {
+                        nivelReservas = 'Alto';
+                        classeNivel = 'positive';
+                    } else {
+                        nivelReservas = 'Moderado';
+                        classeNivel = '';
+                    }
+                    
+                    const content = `
+                        <div class="stats-row">
+                            <div class="stat-card">
+                                <div class="stat-value ${classeNivel}">US$ ${valorBilhoes.toFixed(1)}bi</div>
+                                <div class="stat-label">Reservas Totais</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value ${classeNivel}">${nivelReservas}</div>
+                                <div class="stat-label">Nível</div>
+                            </div>
+                        </div>
+                        ${variacaoMensal !== null ? `
+                        <div class="metric">
+                            <span class="metric-label">Variação Mensal:</span>
+                            <span class="metric-value ${variacaoMensal >= 0 ? 'positive' : 'negative'}">${variacaoMensal >= 0 ? '+' : ''}US$ ${Math.abs(variacaoMensal/1000).toFixed(1)}bi (${variacaoPercentual >= 0 ? '+' : ''}${variacaoPercentual}%)</span>
+                        </div>
+                        ` : ''}
+                        <div class="metric">
+                            <span class="metric-label">Data:</span>
+                            <span class="metric-value">${formatDate(latest.data)}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Importância:</span>
+                            <span class="metric-value">Defesa contra crises externas</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Valor Exato:</span>
+                            <span class="metric-value">US$ ${new Intl.NumberFormat('pt-BR').format(valor)} milhões</span>
+                        </div>
+                    `;
+                    showSuccess('reservas_internacionais', content);
+                } else {
+                    showError('reservas_internacionais', 'Nenhum dado encontrado');
+                }
+            } catch (error) {
+                console.error('Erro Reservas Internacionais:', error);
+            }
+        }
+
+        // Função para análise das reservas internacionais
+        async function fetchAnaliseReservas() {
+            try {
+                showLoading('analise_reservas');
+                
+                // Buscar dados das reservas
+                const proxyRequestUrl = proxyUrl + encodeURIComponent("https://api.bcb.gov.br/dados/serie/bcdata.sgs.3546/dados/ultimos/1?formato=json");
+                const response = await fetch(proxyRequestUrl);
+                const result = await response.json();
+                
+                const parseApiData = (result) => {
+                    if (!result.success) return null;
+                    let data = result.data;
+                    if (typeof data === 'string') {
+                        try { data = JSON.parse(data); } catch (e) { return null; }
+                    }
+                    if (!Array.isArray(data)) return null;
+                    return data;
+                };
+                
+                const reservasData = parseApiData(result);
+                
+                if (reservasData && reservasData.length > 0) {
+                    const valor = parseFloat(reservasData[0].valor);
+                    const valorBilhoes = valor / 1000;
+                    
+                    // Estimativas aproximadas para contexto brasileiro
+                    const populacaoBrasil = 215000000; // ~215 milhões
+                    const reservasPorHabitante = (valor * 1000000) / populacaoBrasil; // Converter para USD
+                    
+                    // Estimativa de cobertura de importações (aproximada)
+                    const importacoesMensaisEstimadas = 20; // ~US$ 20bi/mês (estimativa)
+                    const coberturaImportacoes = valorBilhoes / importacoesMensaisEstimadas;
+                    
+                    // Comparação com outros países (aproximações)
+                    let comparacaoMundial = 'Posição intermediária';
+                    let classeMundial = '';
+                    
+                    if (valorBilhoes > 500) {
+                        comparacaoMundial = 'Entre os maiores do mundo';
+                        classeMundial = 'positive';
+                    } else if (valorBilhoes > 300) {
+                        comparacaoMundial = 'Posição forte globalmente';
+                        classeMundial = 'positive';
+                    } else if (valorBilhoes < 200) {
+                        comparacaoMundial = 'Abaixo do recomendado';
+                        classeMundial = 'negative';
+                    }
+                    
+                    const content = `
+                        <div class="stats-row">
+                            <div class="stat-card">
+                                <div class="stat-value">US$ ${reservasPorHabitante.toFixed(0)}</div>
+                                <div class="stat-label">Por Habitante</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-value">${coberturaImportacoes.toFixed(1)} meses</div>
+                                <div class="stat-label">Cobertura Importações</div>
+                            </div>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Contexto Global:</span>
+                            <span class="metric-value ${classeMundial}">${comparacaoMundial}</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Capacidade:</span>
+                            <span class="metric-value">Cobrir ${coberturaImportacoes.toFixed(1)} meses de importações</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Função:</span>
+                            <span class="metric-value">Estabilizar câmbio em crises</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Benchmark:</span>
+                            <span class="metric-value">Ideal: 3-6 meses de importações</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Observação:</span>
+                            <span class="metric-value">Estimativas baseadas em dados aproximados</span>
+                        </div>
+                    `;
+                    showSuccess('analise_reservas', content);
+                } else {
+                    showError('analise_reservas', 'Erro ao carregar dados para análise');
+                }
+            } catch (error) {
+                console.error('❌ Erro Análise Reservas:', error);
+                showError('analise_reservas', `Erro na análise: ${error.message}`);
+            }
+        }
+
         // Função para buscar dados da Poupança
         async function fetchPoupanca() {
             const apiUrl = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.195/dados/ultimos/3?formato=json";
@@ -1924,7 +2132,7 @@
             
             showProgressBar();
             let completed = 0;
-            const total = 13; // Número total de APIs (incluindo Poupança e Comparativo)
+            const total = 15; // Número total de APIs (incluindo Reservas)
             
             const updateProgressAndComplete = () => {
                 completed++;
@@ -1959,11 +2167,13 @@
             setTimeout(() => fetchWithProgress(fetchPIB), 1100);
             setTimeout(() => fetchWithProgress(fetchIBCBr), 1300);
             setTimeout(() => fetchWithProgress(fetchBalancaComercial), 1500);
-            setTimeout(() => fetchWithProgress(fetchPoupanca), 1700);
-            setTimeout(() => fetchWithProgress(fetchComparativoInvestimentos), 1900);
-            setTimeout(() => fetchWithProgress(fetchCredito), 2100);
-            setTimeout(() => fetchWithProgress(fetchCarteira), 2300);
-            setTimeout(() => fetchWithProgress(fetchInadimplencia), 2500);
+            setTimeout(() => fetchWithProgress(fetchReservasInternacionais), 1700);
+            setTimeout(() => fetchWithProgress(fetchAnaliseReservas), 1900);
+            setTimeout(() => fetchWithProgress(fetchPoupanca), 2100);
+            setTimeout(() => fetchWithProgress(fetchComparativoInvestimentos), 2300);
+            setTimeout(() => fetchWithProgress(fetchCredito), 2500);
+            setTimeout(() => fetchWithProgress(fetchCarteira), 2700);
+            setTimeout(() => fetchWithProgress(fetchInadimplencia), 2900);
         }
 
         // Função para formatar números grandes
