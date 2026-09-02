@@ -790,19 +790,31 @@
 
         // Função para buscar dados do IBC-Br (Índice de Atividade Econômica)
         async function fetchIBCBr() {
-            const apiUrl = "https://api.bcb.gov.br/dados/serie/bcdata.sgs.24363/dados/ultimos/2?formato=json";
+            const apiUrl = "https://open-economics-data.knbf982hkn.chatgpt.site/api/v1/indicators/br-ibc-br/observations?order=desc&limit=2";
             
             try {
-                const data = await fetchWithProxy(apiUrl, 'ibc_br');
+                showLoading('ibc_br');
+
+                const response = await fetch(apiUrl, {
+                    headers: { 'Accept': 'application/json' },
+                    signal: AbortSignal.timeout(25000)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                const data = result.data;
                 
                 if (data && data.length > 0) {
-                    const latest = data[data.length - 1];
-                    const valor = parseFloat(latest.valor);
+                    const latest = data[0];
+                    const valor = Number(latest.value);
                     
                     // Calcular variação se temos dados suficientes
                     let variacao = null;
                     if (data.length > 1) {
-                        const anterior = parseFloat(data[data.length - 2].valor);
+                        const anterior = Number(data[1].value);
                         variacao = ((valor - anterior) / anterior * 100).toFixed(2);
                     }
                     
@@ -821,11 +833,15 @@
                         </div>
                         <div class="metric">
                             <span class="metric-label">Data:</span>
-                            <span class="metric-value">${formatDate(latest.data)}</span>
+                            <span class="metric-value">${formatDate(latest.date)}</span>
                         </div>
                         <div class="metric">
                             <span class="metric-label">Impacto:</span>
                             <span class="metric-value">Indicador proxy do PIB mensal</span>
+                        </div>
+                        <div class="metric">
+                            <span class="metric-label">Fonte:</span>
+                            <span class="metric-value">BCB via Open Economics</span>
                         </div>
                     `;
                     showSuccess('ibc_br', content);
@@ -834,6 +850,7 @@
                 }
             } catch (error) {
                 console.error('Erro IBC-Br:', error);
+                showError('ibc_br', `Erro ao carregar dados: ${error.message}`);
             }
         }
 
