@@ -10,7 +10,14 @@
     "build": "echo 'Static files ready for deployment'",
     "vercel-build": "echo 'Vercel build completed - static files in public directory'"
   },
-  "keywords": ["banco-central", "api", "economia", "brasil", "vercel", "dashboard"],
+  "keywords": [
+    "banco-central",
+    "api",
+    "economia",
+    "brasil",
+    "vercel",
+    "dashboard"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
