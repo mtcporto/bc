@@ -1,22 +1,5 @@
-        // Detectar automaticamente a URL do proxy
         const getProxyUrl = () => {
-            const currentHost = window.location.hostname;
-            const currentProtocol = window.location.protocol;
-            
-            // Se estamos no Vercel (vercel.app domain) ou em produção
-            if (currentHost.includes('vercel.app') || 
-                (currentHost !== 'localhost' && currentHost !== '127.0.0.1')) {
-                // Usar Vercel Serverless Function
-                return `${currentProtocol}//${currentHost}/api/proxy?url=`;
-            }
-            
-            // Se estamos acessando via localhost na porta 3000, usar a mesma
-            if (window.location.port === '3000') {
-                return `${currentProtocol}//${currentHost}:3000/proxy?url=`;
-            }
-            
-            // Caso contrário, assumir que o proxy está na porta 3000 (desenvolvimento)
-            return `${currentProtocol}//${currentHost}:3000/proxy?url=`;
+            return `${window.location.origin}/api/proxy?url=`;
         };
 
         const proxyUrl = getProxyUrl();

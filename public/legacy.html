@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Banco Central Playground · versão legada</title>
+
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Highcharts -->
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/themes/dark-unica.js"></script>
+    <script src="https://code.highcharts.com/themes/gray.js"></script>
+
+    <link rel="stylesheet" href="styles.css">
+
+</head>
+<body data-theme="dark">
+    <p style="padding: 16px; text-align: center;"><a href="/" style="color: #78c7ff;">Conheça o novo BC Aberto</a> · Painel legado: séries e simulações ainda não revisadas.</p>
+    <!-- Barra de progresso de carregamento -->
+    <div class="loading-progress" id="loading-progress" style="display: none;">
+        <div class="loading-progress-bar" id="loading-progress-bar"></div>
+    </div>
+
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-university"></i>
+                <h1>Banco Central Playground</h1>
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <i class="fas fa-moon" id="theme-icon"></i>
+                <span id="theme-text">Tema Claro</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="container">
+        <!-- Seção Câmbio -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-exchange-alt"></i>
+                Câmbio
+            </h2>
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-dollar-sign"></i>
+                            PTAX - Dólar (USD)
+                        </div>
+                    </div>
+                    <div id="ptax" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-euro-sign"></i>
+                            PTAX - Euro (EUR)
+                        </div>
+                    </div>
+                    <div id="ptax_euro" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção Inflação e Juros -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-line"></i>
+                Inflação e Juros
+            </h2>
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-percentage"></i>
+                            <span class="tooltip" data-tooltip="Taxa básica de juros da economia">SELIC</span>
+                        </div>
+                    </div>
+                    <div id="selic" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-chart-area"></i>
+                            <span class="tooltip" data-tooltip="Índice de Preços ao Consumidor Amplo">IPCA</span>
+                        </div>
+                    </div>
+                    <div id="ipca" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-calendar-check"></i>
+                            <span class="tooltip" data-tooltip="Prévia da inflação - divulgado na primeira quinzena">IPCA-15</span>
+                        </div>
+                    </div>
+                    <div id="ipca15" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-home"></i>
+                            <span class="tooltip" data-tooltip="Índice Geral de Preços do Mercado - usado em aluguéis">IGP-M</span>
+                        </div>
+                    </div>
+                    <div id="igpm" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card" style="grid-column: 1 / -1;">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-chart-line"></i>
+                            <span class="tooltip" data-tooltip="Certificado de Depósito Interbancário">CDI - Histórico</span>
+                        </div>
+                    </div>
+                    <div id="cdi" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                    <div id="grafico_cdi" class="chart-container" style="display: none;"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção PIB -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-bar"></i>
+                PIB - Produto Interno Bruto
+            </h2>
+            <div class="grid">
+                <div class="card" style="grid-column: 1 / -1;">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-trophy"></i>
+                            <span class="tooltip" data-tooltip="Principal indicador da atividade econômica nacional">PIB Trimestral</span>
+                        </div>
+                    </div>
+                    <div id="pib" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                    <div id="grafico_pib" class="chart-container" style="display: none;"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção Atividade Econômica -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-chart-area"></i>
+                Atividade Econômica
+            </h2>
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-industry"></i>
+                            <span class="tooltip" data-tooltip="Indicador mensal contemporâneo da atividade econômica nacional">IBC-Br</span>
+                        </div>
+                    </div>
+                    <div id="ibc_br" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-balance-scale"></i>
+                            <span class="tooltip" data-tooltip="Saldo da balança comercial brasileira">Balança Comercial</span>
+                        </div>
+                    </div>
+                    <div id="balanca_comercial" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção Indicadores Macroeconômicos -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-globe-americas"></i>
+                Indicadores Macroeconômicos
+            </h2>
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-shield-alt"></i>
+                            <span class="tooltip" data-tooltip="Reservas em moeda estrangeira do Banco Central">Reservas Internacionais</span>
+                        </div>
+                    </div>
+                    <div id="reservas_internacionais" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-calculator"></i>
+                            <span class="tooltip" data-tooltip="Reservas por habitante e cobertura de importações">Análise das Reservas</span>
+                        </div>
+                    </div>
+                    <div id="analise_reservas" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-home"></i>
+                            <span class="tooltip" data-tooltip="Índice Nacional de Custo da Construção Civil">INCC - Construção Civil</span>
+                        </div>
+                    </div>
+                    <div id="incc" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção Investimentos -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-piggy-bank"></i>
+                Investimentos Populares
+            </h2>
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-university"></i>
+                            <span class="tooltip" data-tooltip="Rendimento da caderneta de poupança">Poupança</span>
+                        </div>
+                    </div>
+                    <div id="poupanca" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-chart-line"></i>
+                            <span class="tooltip" data-tooltip="Comparação: Poupança vs SELIC vs CDI">Comparativo</span>
+                        </div>
+                    </div>
+                    <div id="comparativo_investimentos" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Seção Crédito -->
+        <section class="section">
+            <h2 class="section-title">
+                <i class="fas fa-credit-card"></i>
+                Crédito
+            </h2>
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-shopping-cart"></i>
+                            Taxa de Juros - Crédito Consumo
+                        </div>
+                    </div>
+                    <div id="credito" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-wallet"></i>
+                            Carteira de Crédito Total
+                        </div>
+                    </div>
+                    <div id="carteira" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <span class="tooltip" data-tooltip="Percentual da carteira com atraso superior a 90 dias">Taxa de Inadimplência</span>
+                        </div>
+                    </div>
+                    <div id="inadimplencia" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Indicadores Sociais e Econômicos -->
+        <section class="section">
+            <h2><i class="fas fa-users"></i> Indicadores Sociais</h2>
+            <div class="grid">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fas fa-user-slash"></i>
+                            <span class="tooltip" data-tooltip="Taxa de desocupação da população brasileira">Taxa de Desemprego</span>
+                        </div>
+                    </div>
+                    <div id="desemprego" class="data-display">
+                        <div class="loading">
+                            <div class="spinner"></div>
+                            Carregando dados...
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

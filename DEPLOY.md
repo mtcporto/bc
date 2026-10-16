@@ -1,74 +1,33 @@
-# Deploy Instructions for Vercel
+# Deploy do BC Aberto na Vercel
 
-## 🚀 Como fazer deploy no Vercel
+## Preparação
 
-### 1. Arquivos importantes para o deploy:
-- `vercel.json` - Configuração da Vercel
-- `api/proxy.js` - Serverless Function para proxy das APIs
-- `index.html` - Interface principal
-- `package.json` - Dependências (opcional para static)
+1. Use Node.js 22 ou superior e execute `npm ci`, `npm test` e `npm run build`.
+2. Importe o repositório na Vercel com o preset **Other**, raiz do projeto neste diretório, build `npm run build` e saída `public`.
+3. O arquivo `vercel.json` define a saída e o limite de 30 segundos das funções. A consulta ao BCB tem timeout de 20 segundos.
+4. Não são necessárias variáveis de ambiente ou chaves de API.
 
-### 2. Estrutura no Vercel:
-```
-/
-├── index.html (arquivo principal)
-├── vercel.json (configuração)
-├── api/
-│   └── proxy.js (serverless function)
-└── package.json
-```
+## Rotas
 
-### 3. Como a detecção de ambiente funciona:
+| Rota | Implementação |
+|---|---|
+| `/` | `public/index.html` |
+| `/desenvolvedores.html` | documentação REST, OpenAPI e MCP |
+| `/fontes.html` | produtores, metadados e limites |
+| `/api/v1/indicators` e subrotas | função dinâmica `api/v1/[...path].js` |
+| `/api/v1/openapi.json` | mesma função da API |
+| `/api/mcp` | `api/mcp.js` |
 
-O JavaScript no `index.html` detecta automaticamente o ambiente:
+Não reescreva a raiz para `/public/index.html`: `public` já é o diretório de saída. Os módulos `lib/` são importados pelas funções serverless; não devem ser servidos como arquivos públicos.
 
-- **Local (localhost)**: Usa `http://localhost:3000/proxy?url=`
-- **Vercel/Produção**: Usa `/api/proxy?url=`
+## Conferência após o deploy
 
-### 4. Configurações importantes:
+- Abrir o site em desktop e celular.
+- Consultar catálogo, uma série mensal e dólar diário. Verificar unidade e data de referência.
+- Baixar CSV e abrir JSON no painel.
+- Abrir `/api/v1/openapi.json`.
+- Conectar um cliente MCP Streamable HTTP em `https://SEU-DOMINIO/api/mcp`, listar as três ferramentas e consultar uma série.
+- Confirmar que `/package.json` e `/lib/catalog.js` não são públicos.
+- Verificar logs se a fonte retornar erro; a API não substitui falhas por números fictícios.
 
-**vercel.json:**
-- Define que `index.html` é estático
-- Define que `api/proxy.js` é uma serverless function
-- Configura rotas para ambos
-
-**api/proxy.js:**
-- Serverless function que substitui o `proxy-server.js` em produção
-- Tem whitelist de domínios do BCB
-- Timeout de 25s (limite Vercel: 30s)
-- CORS habilitado
-
-### 5. Testando localmente:
-
-```bash
-# Desenvolvimento local (mantém servidor Express)
-npm start
-
-# Simular ambiente Vercel
-vercel dev
-```
-
-### 6. Deploy para Vercel:
-
-```bash
-# Via CLI da Vercel
-vercel --prod
-
-# Ou conectar repositório GitHub na dashboard Vercel
-```
-
-### 7. URLs das APIs BCB suportadas:
-- `api.bcb.gov.br` ✅
-- `olinda.bcb.gov.br` ✅  
-- `www3.bcb.gov.br` ✅
-
-### 8. Troubleshooting:
-
-**Problema**: Dados não carregam
-**Solução**: Verificar Console do navegador para erros de CORS ou fetch
-
-**Problema**: Timeout
-**Solução**: APIs do BCB podem ser lentas, serverless function tem 30s limite
-
-**Problema**: 403 Forbidden  
-**Solução**: Verificar se URL está na whitelist de domínios
+O cache é efêmero e por instância. Para tráfego público elevado, planeje rate limiting e cache compartilhado antes de divulgar amplamente o serviço. O deploy não é executado automaticamente por alterações locais: revise e publique pelo fluxo habitual do repositório.

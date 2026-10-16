@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 280" fill="none">
+  <title>A economia conecta construção, preços, trabalho e juros</title>
+  <desc>Ilustração editorial de uma cidade com casas, edifícios e pessoas conectadas a símbolos de moeda e percentuais. Não representa uma série de dados.</desc>
+  <rect width="620" height="280" rx="16" fill="#e9efdd"/>
+  <circle cx="493" cy="77" r="97" fill="#dbe5c8"/>
+  <path d="M24 237H596" stroke="#a3b38b"/>
+  <path d="M75 235V150H154V235M87 149V122H143V149" fill="#8da771"/>
+  <path d="M96 165H108V182H96ZM123 165H135V182H123ZM96 195H108V212H96ZM123 195H135V212H123Z" fill="#e9efdd"/>
+  <path d="M177 235V105H266V235" fill="#315b43"/>
+  <path d="M194 121H208V140H194ZM233 121H247V140H233ZM194 154H208V173H194ZM233 154H247V173H233ZM194 187H208V206H194ZM233 187H247V206H233Z" fill="#bbcf9b"/>
+  <path d="M162 89H286M221 89V55M270 89V110" stroke="#315b43" stroke-width="5" stroke-linecap="round"/>
+  <path d="M305 234V177L349 141L393 177V234" fill="#bbcf9b"/>
+  <path d="M295 178L349 132L404 178" stroke="#315b43" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M338 235V203H362V235" fill="#315b43"/>
+  <path d="M441 234V161H522V234" fill="#8da771"/>
+  <path d="M432 161H532L519 137H445Z" fill="#315b43"/>
+  <path d="M445 173H518" stroke="#e9efdd" stroke-width="9" stroke-dasharray="9 7"/>
+  <path d="M459 199H478V234H459M492 199H510V216H492" fill="#e9efdd"/>
+  <circle cx="294" cy="208" r="8" fill="#b58955"/>
+  <path d="M294 219V235M284 236L286 222H302L305 236" stroke="#315b43" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="553" cy="210" r="7" fill="#b58955"/>
+  <path d="M544 235L547 223H559L562 235" stroke="#315b43" stroke-width="5" stroke-linecap="round"/>
+  <path d="M117 111V76H174M350 120V66H421" stroke="#8da771" stroke-dasharray="4 5" stroke-width="2"/>
+  <circle cx="104" cy="66" r="22" fill="#f8faef" stroke="#a3b38b"/>
+  <text x="104" y="73" text-anchor="middle" fill="#315b43" font-family="Georgia,serif" font-size="23">R$</text>
+  <circle cx="454" cy="65" r="28" fill="#315b43"/>
+  <text x="454" y="76" text-anchor="middle" fill="#d3e99c" font-family="Georgia,serif" font-size="32">%</text>
+  <text x="26" y="28" fill="#315b43" font-family="sans-serif" font-size="10" letter-spacing="2">A ECONOMIA NO COTIDIANO</text>
+  <text x="44" y="262" fill="#315b43" font-family="sans-serif" font-size="10">CONSTRUÇÃO</text>
+  <text x="205" y="262" fill="#315b43" font-family="sans-serif" font-size="10">TRABALHO</text>
+  <text x="362" y="262" fill="#315b43" font-family="sans-serif" font-size="10">PREÇOS</text>
+  <text x="502" y="262" fill="#315b43" font-family="sans-serif" font-size="10">JUROS</text>
+</svg>
