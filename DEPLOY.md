@@ -20,6 +20,8 @@
 
 Não reescreva a raiz para `/public/index.html`: `public` já é o diretório de saída. Os módulos `lib/` são importados pelas funções serverless; não devem ser servidos como arquivos públicos.
 
+A função catch-all remove o parâmetro interno `path` acrescentado pelo roteamento da Vercel somente quando corresponde à rota solicitada. A validação dos parâmetros públicos continua estrita; esse tratamento não é necessário no servidor Express local.
+
 ## Conferência após o deploy
 
 - Abrir o site em desktop e celular.

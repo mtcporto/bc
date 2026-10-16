@@ -35,6 +35,38 @@ test('Vercel entrypoints export the real shared handlers', () => {
   assert.equal(typeof mcpHandler, 'function');
 });
 
+test('Vercel catch-all routing query is excluded without relaxing public query validation', async () => {
+  const app = express();
+  app.use(createApiHandler(service, { catchAllParameter: 'path' }));
+  const routed = app.listen(0, '127.0.0.1');
+  await new Promise(resolve => routed.once('listening', resolve));
+  const origin = `http://127.0.0.1:${routed.address().port}`;
+  try {
+    for (const route of [
+      '/indicators',
+      '/indicators?q=432',
+      '/indicators/br-ipca-mensal',
+      '/indicators/br-ipca-mensal/observations?limit=1',
+      '/indicators/br-ipca-mensal/observations.csv?limit=1',
+      '/openapi.json',
+    ]) {
+      const url = new URL(`/api/v1${route}`, origin);
+      url.searchParams.set('path', url.pathname.slice('/api/v1/'.length));
+      const response = await fetch(url);
+      assert.equal(response.status, 200, route);
+      if (route === '/indicators') assert.equal((await response.json()).data.length, 18);
+      if (route === '/indicators?q=432') assert.equal((await response.json()).data[0].id, 'br-selic-meta');
+    }
+    for (const query of ['path=invalid', 'path=indicators&path=indicators', 'path=indicators&unknown=1', 'path=indicators&q=a&q=b']) {
+      assert.equal((await fetch(`${origin}/api/v1/indicators?${query}`)).status, 400, query);
+    }
+    const response = await fetch(`${origin}/api/v1/indicators?path=indicators`);
+    assert.equal(response.status, 200);
+  } finally {
+    await new Promise((resolve, reject) => routed.close(error => error ? reject(error) : resolve()));
+  }
+});
+
 test('catalog, detail, JSON, CSV and OpenAPI work over HTTP', async () => {
   const catalog = await (await fetch(`${base}/api/v1/indicators?q=ipca`)).json();
   assert.equal(catalog.meta.total, 3);

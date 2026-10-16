@@ -1,1 +1,3 @@
-export { default } from '../../lib/http.js';
+import { createApiHandler } from '../../lib/http.js';
+
+export default createApiHandler(undefined, { catchAllParameter: 'path' });
