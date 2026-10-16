@@ -8,7 +8,7 @@ import { createApiHandler } from '../lib/http.js';
 import { createDataService } from '../lib/data.js';
 import { createMcpServer } from '../lib/mcp.js';
 import { createApp } from '../proxy-server.js';
-import v1Handler from '../api/v1/[...path].js';
+import v1Handler from '../api/indicators.js';
 import mcpHandler from '../api/mcp.js';
 
 const service = createDataService({
@@ -35,9 +35,10 @@ test('Vercel entrypoints export the real shared handlers', () => {
   assert.equal(typeof mcpHandler, 'function');
 });
 
-test('Vercel catch-all routing query is excluded without relaxing public query validation', async () => {
+test('Vercel explicit rewrite routes all API depths without relaxing public query validation', async () => {
   const app = express();
-  app.use(createApiHandler(service, { catchAllParameter: 'path' }));
+  app.use('/api/entrypoint', v1Handler);
+  app.use(createApiHandler(service, { routeParameter: 'route' }));
   const routed = app.listen(0, '127.0.0.1');
   await new Promise(resolve => routed.once('listening', resolve));
   const origin = `http://127.0.0.1:${routed.address().port}`;
@@ -50,18 +51,21 @@ test('Vercel catch-all routing query is excluded without relaxing public query v
       '/indicators/br-ipca-mensal/observations.csv?limit=1',
       '/openapi.json',
     ]) {
-      const url = new URL(`/api/v1${route}`, origin);
-      url.searchParams.set('path', url.pathname.slice('/api/v1/'.length));
+      const source = new URL(`/api/v1${route}`, origin);
+      const url = new URL('/api/indicators', origin);
+      url.search = source.search;
+      url.searchParams.set('route', source.pathname.slice('/api/v1/'.length));
       const response = await fetch(url);
       assert.equal(response.status, 200, route);
       if (route === '/indicators') assert.equal((await response.json()).data.length, 18);
       if (route === '/indicators?q=432') assert.equal((await response.json()).data[0].id, 'br-selic-meta');
     }
-    for (const query of ['path=invalid', 'path=indicators&path=indicators', 'path=indicators&unknown=1', 'path=indicators&q=a&q=b']) {
-      assert.equal((await fetch(`${origin}/api/v1/indicators?${query}`)).status, 400, query);
+    for (const query of ['route=indicators&path=invalid', 'route=indicators&route=indicators', 'route=indicators&unknown=1', 'route=indicators&q=a&q=b']) {
+      assert.equal((await fetch(`${origin}/api/indicators?${query}`)).status, 400, query);
     }
-    const response = await fetch(`${origin}/api/v1/indicators?path=indicators`);
+    const response = await fetch(`${origin}/api/entrypoint?route=indicators`);
     assert.equal(response.status, 200);
+    assert.equal((await response.json()).data.length, 18);
   } finally {
     await new Promise((resolve, reject) => routed.close(error => error ? reject(error) : resolve()));
   }

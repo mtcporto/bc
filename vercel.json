@@ -5,5 +5,11 @@
       "maxDuration": 30
     }
   },
-  "outputDirectory": "public"
+  "outputDirectory": "public",
+  "rewrites": [
+    {
+      "source": "/api/v1/:route*",
+      "destination": "/api/indicators?route=:route*"
+    }
+  ]
 }

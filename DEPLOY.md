@@ -14,13 +14,13 @@
 | `/` | `public/index.html` |
 | `/desenvolvedores.html` | documentação REST, OpenAPI e MCP |
 | `/fontes.html` | produtores, metadados e limites |
-| `/api/v1/indicators` e subrotas | função dinâmica `api/v1/[...path].js` |
+| `/api/v1/indicators` e subrotas | rewrite explícito para `api/indicators.js` |
 | `/api/v1/openapi.json` | mesma função da API |
 | `/api/mcp` | `api/mcp.js` |
 
 Não reescreva a raiz para `/public/index.html`: `public` já é o diretório de saída. Os módulos `lib/` são importados pelas funções serverless; não devem ser servidos como arquivos públicos.
 
-A função catch-all remove o parâmetro interno `path` acrescentado pelo roteamento da Vercel somente quando corresponde à rota solicitada. A validação dos parâmetros públicos continua estrita; esse tratamento não é necessário no servidor Express local.
+O rewrite `/api/v1/:route*` encaminha todos os níveis da API à função `api/indicators.js`, com o subcaminho no parâmetro interno `route`. A função consome esse parâmetro antes de validar os filtros públicos. O servidor Express local continua usando o caminho original, sem rewrite.
 
 ## Conferência após o deploy
 
