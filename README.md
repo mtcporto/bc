@@ -26,6 +26,7 @@ Pasta local: `C:\xampp\htdocs\bc` (não `teste2\bc`). O destino de implantação
 - Documentação e conexão MCP em `/desenvolvedores.html`; proveniência, séries e limitações em `/fontes.html`. Tema compartilhado nas três páginas.
 - Hero com a imagem fornecida em `public/hero.png`: gráficos conceituais em verde e dourado, com texto sobreposto e fundo estendido até a borda direita no desktop; composição empilhada no celular. A imagem não representa dados reais.
 - A página de Fontes usa `public/hero-fontes.png` com o mesmo tratamento responsivo do hero inicial. A arte é conceitual e não indica vínculo institucional.
+- A página Para desenvolver usa `public/hero-dev.png`, compartilhando o mesmo layout responsivo e o tratamento para tema escuro.
 
 Para séries mensais, os atalhos 1M, 6M e 1A incluem o início do mês de corte, preservando as observações mensais datadas no primeiro dia. O atalho 5A respeita o limite exato de cinco anos da API.
 
