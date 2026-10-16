@@ -191,8 +191,12 @@ test('home is focused on indicators; developer and source pages have their own n
     assert.ok(!html.includes('src="/app.js"'));
     assert.ok(!html.includes('/legacy.html'));
     assert.ok(!html.includes('Revisão do painel antigo'));
+    if (page === 'fontes.html') {
+      assert.ok(html.includes('src="/hero-fontes.png"'));
+      assert.ok(html.includes('aria-labelledby="sources-title"'));
+    }
   }
-  for (const asset of ['site.js', 'developers.js', 'sources.js', 'hero.png']) {
+  for (const asset of ['site.js', 'developers.js', 'sources.js', 'hero.png', 'hero-fontes.png']) {
     assert.equal((await fetch(`${base}/${asset}`)).status, 200, asset);
   }
 });
