@@ -18,4 +18,6 @@ for (const file of files) {
 for (const file of ['public/index.html', 'public/desenvolvedores.html', 'public/fontes.html', 'public/app.css', 'vercel.json']) {
   if (!readFileSync(path.join(root, file), 'utf8').trim()) throw new Error(`Arquivo vazio: ${file}`);
 }
+const hero = readFileSync(path.join(root, 'public/hero.png'));
+if (!hero.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]))) throw new Error('Hero PNG invalido.');
 console.log(`Validacao concluida: ${files.length} arquivos JavaScript. Frontend estatico, sem compilacao.`);

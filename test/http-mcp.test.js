@@ -180,6 +180,7 @@ test('home is focused on indicators; developer and source pages have their own n
   assert.ok(home.includes('id="explanation"'));
   assert.ok(!home.includes('/economia.svg'));
   assert.ok(!home.includes('/hero-dados.svg'));
+  assert.ok(home.includes('src="/hero.png"'));
   assert.ok(!home.includes('/legacy.html'));
   for (const page of ['desenvolvedores.html', 'fontes.html']) {
     const response = await fetch(`${base}/${page}`);
@@ -191,7 +192,7 @@ test('home is focused on indicators; developer and source pages have their own n
     assert.ok(!html.includes('/legacy.html'));
     assert.ok(!html.includes('Revisão do painel antigo'));
   }
-  for (const asset of ['site.js', 'developers.js', 'sources.js']) {
+  for (const asset of ['site.js', 'developers.js', 'sources.js', 'hero.png']) {
     assert.equal((await fetch(`${base}/${asset}`)).status, 200, asset);
   }
 });
