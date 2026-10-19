@@ -144,10 +144,41 @@ test('cache coalesces requests, shares different limits, expires and preserves r
 
 test('failures are not cached; retry fetches again', async () => {
   let calls = 0;
-  const service = fixture({ fetchImpl: async () => ++calls === 1 ? new Response('unavailable', { status: 503 }) : new Response(JSON.stringify(rows)) });
+  const service = fixture({ fetchImpl: async () => ++calls === 1 ? new Response('unavailable', { status: 400 }) : new Response(JSON.stringify(rows)) });
   await assert.rejects(service.observations(monthly.id), { status: 502, code: 'UPSTREAM_ERROR' });
   assert.equal((await service.observations(monthly.id)).data.length, 2);
   assert.equal(calls, 2);
+});
+
+test('transient HTTP 503 retries and succeeds without changing API response', async () => {
+  let calls = 0;
+  const service = fixture({ sleep: async () => {}, fetchImpl: async () => {
+    calls++;
+    return calls < 3 ? new Response('unavailable', { status: 503 }) : new Response(JSON.stringify(rows));
+  } });
+  const result = await service.observations(monthly.id);
+  assert.equal(calls, 3);
+  assert.equal(result.data.length, 2);
+});
+
+test('transient HTTP 502 exhausts retries and returns upstream error', async () => {
+  let calls = 0;
+  const service = fixture({ sleep: async () => {}, fetchImpl: async () => {
+    calls++;
+    return new Response('bad gateway', { status: 502 });
+  } });
+  await assert.rejects(service.observations(monthly.id), { status: 502, code: 'UPSTREAM_ERROR' });
+  assert.equal(calls, 3);
+});
+
+test('non-transient HTTP 400 is never retried', async () => {
+  let calls = 0;
+  const service = fixture({ sleep: async () => {}, fetchImpl: async () => {
+    calls++;
+    return new Response('bad request', { status: 400 });
+  } });
+  await assert.rejects(service.observations(monthly.id), { status: 502 });
+  assert.equal(calls, 1);
 });
 
 test('empty interval has null coverage and explicit status, never an invented latest value', async () => {
