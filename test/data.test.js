@@ -212,6 +212,26 @@ test('expired cache falls back to stale data after upstream failure', async () =
   assert.equal(result.data.length, 2);
 });
 
+test('stale snapshot from previous day is filtered to requested dates', async () => {
+  const store = new Map();
+  const persistentCache = {
+    get: async key => store.get(key) ?? null,
+    getLatest: async () => [...store.values()].at(-1) ?? null,
+    set: async (key, value) => { store.set(key, value); },
+  };
+  const first = fixture({ persistentCache });
+  await first.observations(monthly.id);
+  const second = fixture({
+    persistentCache,
+    now: () => new Date('2026-10-17T14:00:00Z'),
+    maxRetries: 0,
+    fetchImpl: async () => { throw new Error('BCB offline'); },
+  });
+  const result = await second.observations(monthly.id, { start: '2026-08-01', end: '2026-10-17' });
+  assert.equal(result.meta.status, 'stale');
+  assert.deepEqual(result.data.map(row => row.period), ['2026-08', '2026-09']);
+});
+
 test('empty interval has null coverage and explicit status, never an invented latest value', async () => {
   const result = await fixture({ fetchImpl: async () => new Response('[]') }).observations(monthly.id);
   assert.deepEqual(result.data, []);
