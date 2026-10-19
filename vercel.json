@@ -11,5 +11,31 @@
       "source": "/api/v1/:route*",
       "destination": "/api/indicators?route=:route*"
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/sync?shard=0",
+      "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/sync?shard=1",
+      "schedule": "10 9 * * *"
+    },
+    {
+      "path": "/api/sync?shard=2",
+      "schedule": "20 9 * * *"
+    },
+    {
+      "path": "/api/sync?shard=3",
+      "schedule": "30 9 * * *"
+    },
+    {
+      "path": "/api/sync?shard=4",
+      "schedule": "40 9 * * *"
+    },
+    {
+      "path": "/api/sync?shard=5",
+      "schedule": "50 9 * * *"
+    }
   ]
 }
