@@ -181,6 +181,57 @@ test('non-transient HTTP 400 is never retried', async () => {
   assert.equal(calls, 1);
 });
 
+test('persistent cache survives new service instances and handles upstream outages', async () => {
+  const store = new Map();
+  const persistentCache = {
+    get: async key => store.get(key) ?? null,
+    set: async (key, value) => { store.set(key, value); },
+  };
+  const first = fixture({ persistentCache });
+  const initial = await first.observations(monthly.id);
+  assert.equal(initial.data.length, 2);
+  assert.equal(store.size, 1);
+  const second = fixture({ persistentCache, fetchImpl: async () => { throw new Error('BCB offline'); }, maxRetries: 0 });
+  const restored = await second.observations(monthly.id);
+  assert.equal(restored.meta.cache.hit, true);
+  assert.equal(restored.meta.cache.stale, false);
+  assert.equal(restored.meta.retrievedAt, initial.meta.retrievedAt);
+});
+
+test('expired cache falls back to stale data after upstream failure', async () => {
+  const store = new Map();
+  let time = now();
+  const persistentCache = { get: async key => store.get(key), set: async (key, value) => { store.set(key, value); } };
+  const first = fixture({ persistentCache, now: () => time });
+  await first.observations(monthly.id);
+  time = new Date(time.getTime() + 300001);
+  const second = fixture({ persistentCache, now: () => time, maxRetries: 0, fetchImpl: async () => { throw new Error('offline'); } });
+  const result = await second.observations(monthly.id);
+  assert.equal(result.meta.status, 'stale');
+  assert.equal(result.meta.cache.stale, true);
+  assert.equal(result.data.length, 2);
+});
+
+test('stale snapshot from previous day is filtered to requested dates', async () => {
+  const store = new Map();
+  const persistentCache = {
+    get: async key => store.get(key) ?? null,
+    getLatest: async () => [...store.values()].at(-1) ?? null,
+    set: async (key, value) => { store.set(key, value); },
+  };
+  const first = fixture({ persistentCache });
+  await first.observations(monthly.id);
+  const second = fixture({
+    persistentCache,
+    now: () => new Date('2026-10-17T14:00:00Z'),
+    maxRetries: 0,
+    fetchImpl: async () => { throw new Error('BCB offline'); },
+  });
+  const result = await second.observations(monthly.id, { start: '2026-08-01', end: '2026-10-17' });
+  assert.equal(result.meta.status, 'stale');
+  assert.deepEqual(result.data.map(row => row.period), ['2026-08', '2026-09']);
+});
+
 test('empty interval has null coverage and explicit status, never an invented latest value', async () => {
   const result = await fixture({ fetchImpl: async () => new Response('[]') }).observations(monthly.id);
   assert.deepEqual(result.data, []);

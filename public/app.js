@@ -134,6 +134,7 @@ function renderCards() {
     const bottom = element('div', 'card-bottom');
     bottom.append(element('span', '', `SGS ${item.code} · ${item.publisher}`), element('span', '', last ? `Ref.: ${dateLabel(last.period)}` : result?.error ? 'Fonte indisponível' : result ? 'Sem observações' : 'Consultando…'));
     card.append(top, element('div', 'card-name', item.name), reading, element('p', 'card-description', item.description));
+    if (result?.meta?.cache?.stale) card.append(element('p', 'card-error', 'Dados armazenados · fonte temporariamente indisponível.'));
     if (result?.error) card.append(element('p', 'card-error', 'Falha ao consultar. Abra a série para tentar novamente.'));
     card.append(bottom);
     card.addEventListener('click', () => selectIndicator(item.id, true));
@@ -202,8 +203,11 @@ function renderResult() {
   const last = rows.at(-1);
   $('#detail-value').replaceChildren(document.createTextNode(last ? number(last.value) : '—'), element('small', '', state.selected.unit));
   $('#detail-period').textContent = last ? `Referência: ${dateLabel(last.period)}` : '';
-  $('#detail-status').textContent = rows.length ? '' : 'A fonte não tem observações neste intervalo. Experimente um período maior.';
-  $('#detail-status').hidden = rows.length > 0;
+  const stale = result.meta.cache?.stale === true;
+  $('#detail-status').textContent = stale
+    ? 'Exibindo dados armazenados: o Banco Central está temporariamente indisponível. Verifique a data da última consulta abaixo.'
+    : rows.length ? '' : 'A fonte não tem observações neste intervalo. Experimente um período maior.';
+  $('#detail-status').hidden = rows.length > 0 && !stale;
   $('#chart-view').replaceChildren(...(rows.length ? [chart(rows)] : []));
   $('#table-body').replaceChildren(...[...rows].reverse().map(row => {
     const tr = element('tr');
