@@ -142,3 +142,8 @@ npm run build
 Testes determinísticos usam fixtures, sem depender da disponibilidade do BCB: unidades, datas, limites, cache, ausência de dados, falhas, HTTP, CSV e MCP com o cliente oficial. `build` verifica a sintaxe JavaScript e a presença dos arquivos estáticos; não transforma o frontend. Consultas reais e verificação visual são complementares, não substituem os testes.
 
 Consulte [DEPLOY.md](./DEPLOY.md) para publicar na Vercel. Este README e DEPLOY.md são a referência para a versão atual.
+
+
+## Desenvolvimento
+
+Baseline: Node.js 24.x. Consulte o `package.json` para instalação, validação e execução.
